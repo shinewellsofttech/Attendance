@@ -13,6 +13,10 @@ import AddEdit_EmpShiftEditMaster from "../Pages/Masters/AddEdit_EmpShiftEditMas
 import PageList_EmpShiftEditMaster from "../Pages/Masters/PageList_EmpShiftEditMaster";
 import AddEdit_MachineTypeMaster from "../Pages/Masters/AddEdit_MachineTypeMaster";
 import PageList_MachineTypeMaster from "../Pages/Masters/PageList_MachineTypeMaster";
+import AddEdit_StateMaster from "../Pages/Masters/AddEdit_StateMaster";
+import PageList_StateMaster from "../Pages/Masters/PageList_StateMaster";
+import AddEdit_CityMaster from "../Pages/Masters/AddEdit_CityMaster";
+import PageList_CityMaster from "../Pages/Masters/PageList_CityMaster";
 import GlobalOptions from "../Pages/Tools/GlobalOptions";
 import AdminRoute from "./AdminRoute";
 
@@ -32,6 +36,10 @@ export const routes = [
   { path: `${process.env.PUBLIC_URL}/employeeShiftEditMaster`, Component: <AdminRoute><PageList_EmpShiftEditMaster /></AdminRoute> },
   { path: `${process.env.PUBLIC_URL}/addEdit_MachineTypeMaster`, Component: <AdminRoute><AddEdit_MachineTypeMaster /></AdminRoute> },
   { path: `${process.env.PUBLIC_URL}/machineTypeMaster`, Component: <AdminRoute><PageList_MachineTypeMaster /></AdminRoute> },
+  { path: `${process.env.PUBLIC_URL}/addEdit_StateMaster`, Component: <AdminRoute><AddEdit_StateMaster /></AdminRoute> },
+  { path: `${process.env.PUBLIC_URL}/stateMaster`, Component: <AdminRoute><PageList_StateMaster /></AdminRoute> },
+  { path: `${process.env.PUBLIC_URL}/addEdit_CityMaster`, Component: <AdminRoute><AddEdit_CityMaster /></AdminRoute> },
+  { path: `${process.env.PUBLIC_URL}/cityMaster`, Component: <AdminRoute><PageList_CityMaster /></AdminRoute> },
   { path: `${process.env.PUBLIC_URL}/globalOptions`, Component: <AdminRoute><GlobalOptions /></AdminRoute> },
   { path: `${process.env.PUBLIC_URL}/taskManagement`, Component: <TaskManagement /> },
 ];

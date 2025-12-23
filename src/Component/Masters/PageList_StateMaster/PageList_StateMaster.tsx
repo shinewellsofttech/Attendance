@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Card, CardBody, Col, Container, Input, Label, Row, Table } from "reactstrap";
+import { Card, CardBody, Col, Container, FormGroup, Input, Label, Row, Table } from "reactstrap";
 import { Btn } from "../../../AbstractElements";
 import Breadcrumbs from "../../../CommonElements/Breadcrumbs/Breadcrumbs";
 import CardHeaderCommon from "../../../CommonElements/CardHeaderCommon/CardHeaderCommon";
 import { Fn_FillListData, Fn_DeleteData } from "../../../store/Functions";
 import { API_WEB_URLS } from "../../../constants/constAPI";
+import axios from "axios";
 
-const API_URL = `${API_WEB_URLS.MASTER}/0/token/ShiftMaster`;
+const API_URL = `${API_WEB_URLS.MASTER}/0/token/StateMaster`;
 
-const PageList_ShiftMasterContainer = () => {
+const PageList_StateMasterContainer = () => {
   const [gridData, setGridData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState("");
@@ -42,7 +43,6 @@ const PageList_ShiftMasterContainer = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
   const loadData = async () => {
     setLoading(true);
     await Fn_FillListData(dispatch, setGridData, "gridData", API_URL + "/Id/0");
@@ -50,11 +50,11 @@ const PageList_ShiftMasterContainer = () => {
   };
 
   const handleEdit = (id: number) => {
-    navigate("/addEdit_ShiftMaster", { state: { Id: id } });
+    navigate("/addEdit_StateMaster", { state: { Id: id } });
   };
 
   const handleDelete = async (id: number) => {
-    const confirmed = window.confirm("Are you sure you want to delete this shift?");
+    const confirmed = window.confirm("Are you sure you want to delete this state?");
     if (confirmed) {
       try {
         const result = await Fn_DeleteData(dispatch, setGridData, id, API_URL, API_URL + "/Id/0");
@@ -68,36 +68,25 @@ const PageList_ShiftMasterContainer = () => {
   };
 
   const handleAdd = () => {
-    navigate("/addEdit_ShiftMaster", { state: { Id: 0 } });
-  };
-
-  const formatTime = (time: string) => {
-    if (!time) return "-";
-    // If time is in HH:mm format, return as is
-    if (time.includes(":")) {
-      return time;
-    }
-    return time;
+    navigate("/addEdit_StateMaster", { state: { Id: 0 } });
   };
 
   const filteredData = (Array.isArray(gridData) ? gridData : []).filter((item: any) => {
     const searchText = filterText.toLowerCase();
     return (
-      (item.Name && item.Name.toLowerCase().includes(searchText)) ||
-      (item.InTime && item.InTime.toLowerCase().includes(searchText)) ||
-      (item.OutTime && item.OutTime.toLowerCase().includes(searchText))
+      (item.Name && item.Name.toLowerCase().includes(searchText))
     );
   });
 
   return (
     <>
-      <Breadcrumbs mainTitle="Shift Master List" parent="Masters" />
+      <Breadcrumbs mainTitle="State Master List" parent="Masters" />
       <Container fluid>
         <Row>
           <Col xs="12">
             <Card>
               <CardHeaderCommon
-                title="Shift Master List"
+                title="State Master List"
                 tagClass="card-title mb-0"
               />
               <CardBody>
@@ -107,7 +96,7 @@ const PageList_ShiftMasterContainer = () => {
                       <Label className="me-2">Search:</Label>
                       <Input
                         type="search"
-                        placeholder="Search by name or time..."
+                        placeholder="Search by Name..."
                         value={filterText}
                         onChange={(e) => setFilterText(e.target.value)}
                       />
@@ -118,12 +107,12 @@ const PageList_ShiftMasterContainer = () => {
                       color="primary"
                       onClick={handleAdd}
                     >
-                      <i className="fa fa-plus me-2"></i>Add New Shift
+                      <i className="fa fa-plus me-2"></i>Add New State
                     </Btn>
                   </Col>
                 </Row>
                 {loading ? (
-                  <div className="text-center p-4">
+                  <div className="text-center py-5">
                     <div className="spinner-border" role="status">
                       <span className="visually-hidden">Loading...</span>
                     </div>
@@ -135,17 +124,13 @@ const PageList_ShiftMasterContainer = () => {
                         <tr>
                           <th>#</th>
                           <th>Name</th>
-                          <th>In Time</th>
-                          <th>Out Time</th>
-                          <th>Lunch In Time</th>
-                          <th>Lunch Out Time</th>
                           <th style={{ width: "150px", textAlign: "center" }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredData.length === 0 ? (
                           <tr>
-                            <td colSpan={7} className="text-center p-4">
+                            <td colSpan={3} className="text-center">
                               No data found
                             </td>
                           </tr>
@@ -154,11 +139,7 @@ const PageList_ShiftMasterContainer = () => {
                             <tr key={item.Id || index}>
                               <td>{index + 1}</td>
                               <td>{item.Name || "-"}</td>
-                              <td>{formatTime(item.InTime)}</td>
-                              <td>{formatTime(item.OutTime)}</td>
-                              <td>{formatTime(item.LunchInTime)}</td>
-                              <td>{formatTime(item.LunchOutTime)}</td>
-                              <td style={{ width: "150px", whiteSpace: "nowrap" }}>
+                              <td style={{ textAlign: "center" }}>
                                 <Btn
                                   color="primary"
                                   size="sm"
@@ -191,5 +172,5 @@ const PageList_ShiftMasterContainer = () => {
   );
 };
 
-export default PageList_ShiftMasterContainer;
+export default PageList_StateMasterContainer;
 

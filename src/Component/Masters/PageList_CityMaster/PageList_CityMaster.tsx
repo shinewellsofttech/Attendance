@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Card, CardBody, Col, Container, Input, Label, Row, Table } from "reactstrap";
+import { Card, CardBody, Col, Container, FormGroup, Input, Label, Row, Table } from "reactstrap";
 import { Btn } from "../../../AbstractElements";
 import Breadcrumbs from "../../../CommonElements/Breadcrumbs/Breadcrumbs";
 import CardHeaderCommon from "../../../CommonElements/CardHeaderCommon/CardHeaderCommon";
 import { Fn_FillListData, Fn_DeleteData } from "../../../store/Functions";
 import { API_WEB_URLS } from "../../../constants/constAPI";
 
-const API_URL = `${API_WEB_URLS.MASTER}/0/token/ShiftMaster`;
+const API_URL = `${API_WEB_URLS.MASTER}/0/token/CityMaster`;
 
-const PageList_ShiftMasterContainer = () => {
+const PageList_CityMasterContainer = () => {
   const [gridData, setGridData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState("");
@@ -42,7 +42,6 @@ const PageList_ShiftMasterContainer = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
   const loadData = async () => {
     setLoading(true);
     await Fn_FillListData(dispatch, setGridData, "gridData", API_URL + "/Id/0");
@@ -50,11 +49,11 @@ const PageList_ShiftMasterContainer = () => {
   };
 
   const handleEdit = (id: number) => {
-    navigate("/addEdit_ShiftMaster", { state: { Id: id } });
+    navigate("/addEdit_CityMaster", { state: { Id: id } });
   };
 
   const handleDelete = async (id: number) => {
-    const confirmed = window.confirm("Are you sure you want to delete this shift?");
+    const confirmed = window.confirm("Are you sure you want to delete this city?");
     if (confirmed) {
       try {
         const result = await Fn_DeleteData(dispatch, setGridData, id, API_URL, API_URL + "/Id/0");
@@ -68,36 +67,26 @@ const PageList_ShiftMasterContainer = () => {
   };
 
   const handleAdd = () => {
-    navigate("/addEdit_ShiftMaster", { state: { Id: 0 } });
-  };
-
-  const formatTime = (time: string) => {
-    if (!time) return "-";
-    // If time is in HH:mm format, return as is
-    if (time.includes(":")) {
-      return time;
-    }
-    return time;
+    navigate("/addEdit_CityMaster", { state: { Id: 0 } });
   };
 
   const filteredData = (Array.isArray(gridData) ? gridData : []).filter((item: any) => {
     const searchText = filterText.toLowerCase();
     return (
       (item.Name && item.Name.toLowerCase().includes(searchText)) ||
-      (item.InTime && item.InTime.toLowerCase().includes(searchText)) ||
-      (item.OutTime && item.OutTime.toLowerCase().includes(searchText))
+      (item.StateName && item.StateName.toLowerCase().includes(searchText))
     );
   });
 
   return (
     <>
-      <Breadcrumbs mainTitle="Shift Master List" parent="Masters" />
+      <Breadcrumbs mainTitle="City Master List" parent="Masters" />
       <Container fluid>
         <Row>
           <Col xs="12">
             <Card>
               <CardHeaderCommon
-                title="Shift Master List"
+                title="City Master List"
                 tagClass="card-title mb-0"
               />
               <CardBody>
@@ -107,7 +96,7 @@ const PageList_ShiftMasterContainer = () => {
                       <Label className="me-2">Search:</Label>
                       <Input
                         type="search"
-                        placeholder="Search by name or time..."
+                        placeholder="Search by Name or State..."
                         value={filterText}
                         onChange={(e) => setFilterText(e.target.value)}
                       />
@@ -118,7 +107,7 @@ const PageList_ShiftMasterContainer = () => {
                       color="primary"
                       onClick={handleAdd}
                     >
-                      <i className="fa fa-plus me-2"></i>Add New Shift
+                      <i className="fa fa-plus me-2"></i>Add New City
                     </Btn>
                   </Col>
                 </Row>
@@ -135,17 +124,14 @@ const PageList_ShiftMasterContainer = () => {
                         <tr>
                           <th>#</th>
                           <th>Name</th>
-                          <th>In Time</th>
-                          <th>Out Time</th>
-                          <th>Lunch In Time</th>
-                          <th>Lunch Out Time</th>
+                          <th>State</th>
                           <th style={{ width: "150px", textAlign: "center" }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredData.length === 0 ? (
                           <tr>
-                            <td colSpan={7} className="text-center p-4">
+                            <td colSpan={4} className="text-center">
                               No data found
                             </td>
                           </tr>
@@ -154,11 +140,8 @@ const PageList_ShiftMasterContainer = () => {
                             <tr key={item.Id || index}>
                               <td>{index + 1}</td>
                               <td>{item.Name || "-"}</td>
-                              <td>{formatTime(item.InTime)}</td>
-                              <td>{formatTime(item.OutTime)}</td>
-                              <td>{formatTime(item.LunchInTime)}</td>
-                              <td>{formatTime(item.LunchOutTime)}</td>
-                              <td style={{ width: "150px", whiteSpace: "nowrap" }}>
+                              <td>{item.StateName || item.State?.Name || "-"}</td>
+                              <td style={{ textAlign: "center" }}>
                                 <Btn
                                   color="primary"
                                   size="sm"
@@ -191,5 +174,5 @@ const PageList_ShiftMasterContainer = () => {
   );
 };
 
-export default PageList_ShiftMasterContainer;
+export default PageList_CityMasterContainer;
 

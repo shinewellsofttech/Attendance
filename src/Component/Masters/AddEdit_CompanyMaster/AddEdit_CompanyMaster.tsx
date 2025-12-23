@@ -14,17 +14,28 @@ import { API_WEB_URLS } from "../../../constants/constAPI";
 interface FormValues {
   CompanyName: string;
   UserName: string;
+  Address: string;
+  F_StateMaster: string;
+  F_CityMaster: string;
+  PFNo: string;
+  ESINo: string;
+  Signature: string;
+  NatureOfBusiness: string;
   UserPassword: string;
 }
 
 const API_URL_SAVE = "CompanyMaster/0/token";
 const API_URL_EDIT = API_WEB_URLS.MASTER + "/0/token/CompanyMaster/Id";
+const API_URL_STATE = API_WEB_URLS.MASTER + "/0/token/StateMaster/Id/0";
+const API_URL_CITY = API_WEB_URLS.MASTER + "/0/token/CityMaster/Id/0";
 
 const AddEdit_CompanyMasterContainer = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [state, setState] = useState({
     id: 0,
     FillArray: [],
+    StateArray: [] as any[],
+    CityArray: [] as any[],
     formData: {} as any,
     OtherDataScore: [],
     isProgress: true,
@@ -35,22 +46,28 @@ const AddEdit_CompanyMasterContainer = () => {
   const navigate = useNavigate();
 
   // Handle Enter key to move to next field
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, currentFieldName: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, currentFieldName: string) => {
     if (e.key === "Enter") {
       e.preventDefault();
       const form = e.currentTarget.form;
       if (!form) return;
 
       // Define field order
-      const fieldOrder = ["CompanyName", "UserName", "UserPassword"];
+      const fieldOrder = ["CompanyName", "UserName", "UserPassword", "Address", "F_StateMaster", "F_CityMaster", "PFNo", "ESINo", "NatureOfBusiness", "Signature"];
       const currentIndex = fieldOrder.indexOf(currentFieldName);
 
       if (currentIndex < fieldOrder.length - 1) {
         // Move to next field
         const nextFieldName = fieldOrder[currentIndex + 1];
-        const nextInput = form.querySelector(`input[name="${nextFieldName}"]`) as HTMLInputElement;
+        const nextInput = form.querySelector(`input[name="${nextFieldName}"], textarea[name="${nextFieldName}"], select[name="${nextFieldName}"]`) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
         if (nextInput) {
-          nextInput.focus();
+          if (nextInput instanceof HTMLInputElement && !nextInput.readOnly && !nextInput.disabled) {
+            nextInput.focus();
+          } else if (nextInput instanceof HTMLSelectElement && !nextInput.disabled) {
+            nextInput.focus();
+          } else if (nextInput instanceof HTMLTextAreaElement) {
+            nextInput.focus();
+          }
         }
       } else {
         // Last field, focus Save button
@@ -82,6 +99,9 @@ const AddEdit_CompanyMasterContainer = () => {
       navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
       return;
     }
+    // Load State data for dropdown
+    Fn_FillListData(dispatch, setState, "StateArray", API_URL_STATE);
+
     const Id = (location.state && (location.state as any).Id) || 0;
 
     if (Id > 0) {
@@ -107,8 +127,15 @@ const AddEdit_CompanyMasterContainer = () => {
   }, [state.isProgress, state.formData]);
 
   const validationSchema = Yup.object({
-    CompanyName: Yup.string().required("Company Name is required"),
+    CompanyName: Yup.string(),
     UserName: Yup.string().required("UserName is required"),
+    Address: Yup.string(),
+    F_StateMaster: Yup.string(),
+    F_CityMaster: Yup.string(),
+    PFNo: Yup.string(),
+    ESINo: Yup.string(),
+    NatureOfBusiness: Yup.string(),
+    Signature: Yup.string(),
     UserPassword: Yup.string()
       .required("UserPassword is required")
       .min(6, "Password must be at least 6 characters"),
@@ -121,6 +148,13 @@ const AddEdit_CompanyMasterContainer = () => {
     vformData.append("CompanyName", values.CompanyName);
     vformData.append("UserName", values.UserName);
     vformData.append("UserPassword", values.UserPassword);
+    vformData.append("Address", values.Address);
+    vformData.append("F_StateMaster", values.F_StateMaster || "");
+    vformData.append("F_CityMaster", values.F_CityMaster || "");
+    vformData.append("PFNo", values.PFNo);
+    vformData.append("ESINo", values.ESINo);
+    vformData.append("NatureOfBusiness", values.NatureOfBusiness);
+    vformData.append("Signature", values.Signature);
     vformData.append("UserId", obj === null || obj === undefined ? 0 : obj.uid);
 
     Fn_AddEditData(
@@ -140,7 +174,19 @@ const AddEdit_CompanyMasterContainer = () => {
     CompanyName: state.formData?.CompanyName || "",
     UserName: state.formData?.UserName || "",
     UserPassword: state.formData?.UserPassword || "",
+    Address: state.formData?.Address || "",
+    F_StateMaster: state.formData?.F_StateMaster || state.formData?.StateId || "",
+    F_CityMaster: state.formData?.F_CityMaster || state.formData?.CityId || "",
+    PFNo: state.formData?.PFNo || "",
+    ESINo: state.formData?.ESINo || "",
+    Signature: state.formData?.Signature || "",
+    NatureOfBusiness: state.formData?.NatureOfBusiness || "",
   };
+
+  // Load all cities on mount (will be filtered by selected state)
+  useEffect(() => {
+    Fn_FillListData(dispatch, setState, "CityArray", API_URL_CITY);
+  }, [dispatch]);
 
   return (
     <>
@@ -164,7 +210,21 @@ const AddEdit_CompanyMasterContainer = () => {
               onSubmit={handleSubmit}
               enableReinitialize
             >
-              {({ values, handleChange, handleBlur, errors, touched }: FormikProps<FormValues>) => (
+              {({ values, handleChange, handleBlur, errors, touched, setFieldValue }: FormikProps<FormValues>) => {
+                // Filter cities based on selected state
+                const filteredCities = state.CityArray.filter((city: any) => {
+                  if (!values.F_StateMaster) return false;
+                  return city.F_StateMaster === parseInt(values.F_StateMaster) || city.StateId === parseInt(values.F_StateMaster);
+                });
+
+                // Load cities when state changes
+                const handleStateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                  const selectedStateId = e.target.value;
+                  handleChange(e);
+                  setFieldValue("F_CityMaster", ""); // Reset city when state changes
+                };
+
+                return (
                 <Form className="theme-form">
                   <Card>
                     <CardHeaderCommon
@@ -254,6 +314,148 @@ const AddEdit_CompanyMasterContainer = () => {
                             <ErrorMessage name="UserPassword" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
+                        <Col md="6">
+                          <FormGroup>
+                            <Label>
+                              Address
+                            </Label>
+                            <Input
+                              type="textarea"
+                              name="Address"
+                              placeholder="Enter Address"
+                              value={values.Address}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              onKeyDown={(e) => handleKeyDown(e, "Address")}
+                              invalid={touched.Address && !!errors.Address}
+                              rows={3}
+                            />
+                            <ErrorMessage name="Address" component="div" className="text-danger small" />
+                          </FormGroup>
+                        </Col>
+                        <Col md="6">
+                          <FormGroup>
+                            <Label>
+                              State
+                            </Label>
+                            <Input
+                              type="select"
+                              name="F_StateMaster"
+                              value={values.F_StateMaster}
+                              onChange={handleStateChange}
+                              onBlur={handleBlur}
+                              onKeyDown={(e) => handleKeyDown(e, "F_StateMaster")}
+                              className="btn-square"
+                              invalid={touched.F_StateMaster && !!errors.F_StateMaster}
+                            >
+                              <option value="">Select State</option>
+                              {state.StateArray.map((item: any) => (
+                                <option key={item.Id} value={item.Id}>
+                                  {item.Name || `State ${item.Id}`}
+                                </option>
+                              ))}
+                            </Input>
+                            <ErrorMessage name="F_StateMaster" component="div" className="text-danger small" />
+                          </FormGroup>
+                        </Col>
+                        <Col md="6">
+                          <FormGroup>
+                            <Label>
+                              City
+                            </Label>
+                            <Input
+                              type="select"
+                              name="F_CityMaster"
+                              value={values.F_CityMaster}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              onKeyDown={(e) => handleKeyDown(e, "F_CityMaster")}
+                              className="btn-square"
+                              invalid={touched.F_CityMaster && !!errors.F_CityMaster}
+                              disabled={!values.F_StateMaster}
+                            >
+                              <option value="">{values.F_StateMaster ? "Select City" : "Select State First"}</option>
+                              {filteredCities.map((item: any) => (
+                                <option key={item.Id} value={item.Id}>
+                                  {item.Name || `City ${item.Id}`}
+                                </option>
+                              ))}
+                            </Input>
+                            <ErrorMessage name="F_CityMaster" component="div" className="text-danger small" />
+                          </FormGroup>
+                        </Col>
+                        <Col md="6">
+                          <FormGroup>
+                            <Label>
+                              PF No.
+                            </Label>
+                            <Input
+                              type="text"
+                              name="PFNo"
+                              placeholder="Enter PF No."
+                              value={values.PFNo}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              onKeyDown={(e) => handleKeyDown(e, "PFNo")}
+                              invalid={touched.PFNo && !!errors.PFNo}
+                            />
+                            <ErrorMessage name="PFNo" component="div" className="text-danger small" />
+                          </FormGroup>
+                        </Col>
+                        <Col md="6">
+                          <FormGroup>
+                            <Label>
+                              ESI No.
+                            </Label>
+                            <Input
+                              type="text"
+                              name="ESINo"
+                              placeholder="Enter ESI No."
+                              value={values.ESINo}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              onKeyDown={(e) => handleKeyDown(e, "ESINo")}
+                              invalid={touched.ESINo && !!errors.ESINo}
+                            />
+                            <ErrorMessage name="ESINo" component="div" className="text-danger small" />
+                          </FormGroup>
+                        </Col>
+                        <Col md="6">
+                          <FormGroup>
+                            <Label>
+                              Nature Of Business
+                            </Label>
+                            <Input
+                              type="text"
+                              name="NatureOfBusiness"
+                              placeholder="Enter Nature Of Business"
+                              value={values.NatureOfBusiness}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              onKeyDown={(e) => handleKeyDown(e, "NatureOfBusiness")}
+                              invalid={touched.NatureOfBusiness && !!errors.NatureOfBusiness}
+                            />
+                            <ErrorMessage name="NatureOfBusiness" component="div" className="text-danger small" />
+                          </FormGroup>
+                        </Col>
+                        <Col md="6">
+                          <FormGroup>
+                            <Label>
+                              Signature
+                            </Label>
+                            <Input
+                              type="text"
+                              name="Signature"
+                              placeholder="Enter Signature"
+                              value={values.Signature}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              onKeyDown={(e) => handleKeyDown(e, "Signature")}
+                              invalid={touched.Signature && !!errors.Signature}
+                            />
+                            <ErrorMessage name="Signature" component="div" className="text-danger small" />
+                          </FormGroup>
+                        </Col>
                       </Row>
                     </CardBody>
                     <CardFooter className="text-end">
@@ -271,7 +473,8 @@ const AddEdit_CompanyMasterContainer = () => {
                     </CardFooter>
                   </Card>
                 </Form>
-              )}
+              );
+              }}
             </Formik>
           </Col>
         </Row>
