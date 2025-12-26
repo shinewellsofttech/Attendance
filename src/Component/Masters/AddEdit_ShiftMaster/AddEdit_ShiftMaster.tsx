@@ -19,12 +19,12 @@ interface FormValues {
   OutTime: string;
   LunchInTime: string;
   LunchOutTime: string;
-  MaxWorkingHoursFullDay: string;
-  MinWorkingHoursFullDay: string;
-  MaxWorkingHoursHalfDay: string;
-  MinWorkingHoursHalfDay: string;
-  OverTimeApplicable: boolean;
-  GracePeriodMinsOverTime: string;
+  MaxWorkingMinutesFullDay: number | string;
+  MinWorkingMinutesFullDay: number | string;
+  MaxWorkingMinutesHalfDay: number | string;
+  MinWorkingMinutesHalfDay: number | string;
+  IsOvertimeApplicable: boolean;
+  GracePeriodMinutes: number | string;
 }
 
 const API_URL_SAVE = "ShiftMaster/0/token";
@@ -51,15 +51,15 @@ const AddEdit_ShiftMasterContainer = () => {
       const form = e.currentTarget.form;
       if (!form) return;
 
-      // Define field order (including MaxWorkingHoursFullDay even though it's readonly, and OvertimeApplicable checkbox)
-      const fieldOrder = ["Name", "InTime", "OutTime", "LunchInTime", "LunchOutTime", "MaxWorkingHoursFullDay", "MinWorkingHoursFullDay", "MaxWorkingHoursHalfDay", "MinWorkingHoursHalfDay", "GracePeriodMinsOverTime", "OverTimeApplicable"];
+      // Define field order
+      const fieldOrder = ["Name", "InTime", "OutTime", "LunchInTime", "LunchOutTime", "MaxWorkingMinutesFullDay", "MinWorkingMinutesFullDay", "MaxWorkingMinutesHalfDay", "MinWorkingMinutesHalfDay", "GracePeriodMinutes", "IsOvertimeApplicable"];
       const currentIndex = fieldOrder.indexOf(currentFieldName);
 
       if (currentIndex < fieldOrder.length - 1) {
         // Move to next field
         const nextFieldName = fieldOrder[currentIndex + 1];
         // Handle checkbox fields differently
-        if (nextFieldName === "OverTimeApplicable") {
+        if (nextFieldName === "IsOvertimeApplicable") {
           const nextCheckbox = form.querySelector(`input[name="${nextFieldName}"][type="checkbox"]`) as HTMLInputElement;
           if (nextCheckbox) {
             nextCheckbox.focus();
@@ -125,8 +125,8 @@ const AddEdit_ShiftMasterContainer = () => {
     }
   }, [state.isProgress, state.formData]);
 
-  const calculateWorkingHours = (inTime: string, outTime: string): string => {
-    if (!inTime || !outTime) return "";
+  const calculateWorkingMinutes = (inTime: string, outTime: string): number => {
+    if (!inTime || !outTime) return 0;
     try {
       // Convert to 24-hour format if needed
       const inTime24 = inTime.includes("AM") || inTime.includes("PM") ? convertTo24Hour(inTime) : inTime;
@@ -139,12 +139,9 @@ const AddEdit_ShiftMasterContainer = () => {
       const outTotalMinutes = outHours * 60 + outMinutes;
       
       const diffMinutes = outTotalMinutes - inTotalMinutes;
-      const hours = Math.floor(diffMinutes / 60);
-      const minutes = diffMinutes % 60;
-      
-      return `${hours}.${Math.round((minutes / 60) * 100)}`;
+      return diffMinutes;
     } catch (e) {
-      return "";
+      return 0;
     }
   };
 
@@ -154,29 +151,39 @@ const AddEdit_ShiftMasterContainer = () => {
     OutTime: Yup.string().required("Out Time is required"),
     LunchInTime: Yup.string().required("Lunch In Time is required"),
     LunchOutTime: Yup.string().required("Lunch Out Time is required"),
-    MaxWorkingHoursFullDay: Yup.string().required("Max Working Hours Full Day is required"),
-    MinWorkingHoursFullDay: Yup.string().required("Min Working Hours Full Day is required"),
-    MaxWorkingHoursHalfDay: Yup.string().required("Max Working Hours Half Day is required"),
-    MinWorkingHoursHalfDay: Yup.string().required("Min Working Hours Half Day is required"),
-    GracePeriodMinsOverTime: Yup.string().required("Grace Period Mins (Over Time) is required"),
+    MaxWorkingMinutesFullDay: Yup.number().required("Max Working Minutes Full Day is required"),
+    MinWorkingMinutesFullDay: Yup.number().required("Min Working Minutes Full Day is required"),
+    MaxWorkingMinutesHalfDay: Yup.number().required("Max Working Minutes Half Day is required"),
+    MinWorkingMinutesHalfDay: Yup.number().required("Min Working Minutes Half Day is required"),
+    GracePeriodMinutes: Yup.number().required("Grace Period Minutes is required"),
   });
 
   const handleSubmit = (values: FormValues) => {
-    const obj = JSON.parse(localStorage.getItem("user") || "{}");
+    let userId = 0;
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const obj = JSON.parse(userStr);
+        userId = (obj && (obj.uid || obj.Id)) ? (obj.uid || obj.Id) : 0;
+      }
+    } catch (error) {
+      console.error("Error parsing user from localStorage:", error);
+    }
+    
     let vformData = new FormData();
-
     vformData.append("Name", values.Name);
+    // Time fields in 24-hour format (e.g., '09:00')
     vformData.append("InTime", formatTimeForAPI(values.InTime));
     vformData.append("OutTime", formatTimeForAPI(values.OutTime));
     vformData.append("LunchInTime", formatTimeForAPI(values.LunchInTime));
     vformData.append("LunchOutTime", formatTimeForAPI(values.LunchOutTime));
-    vformData.append("MaxWorkingHoursFullDay", values.MaxWorkingHoursFullDay);
-    vformData.append("MinWorkingHoursFullDay", values.MinWorkingHoursFullDay);
-    vformData.append("MaxWorkingHoursHalfDay", values.MaxWorkingHoursHalfDay);
-    vformData.append("MinWorkingHoursHalfDay", values.MinWorkingHoursHalfDay);
-    vformData.append("OverTimeApplicable", values.OverTimeApplicable ? "true" : "false");
-    vformData.append("GracePeriodMinsOverTime", values.GracePeriodMinsOverTime);
-    vformData.append("UserId", obj === null || obj === undefined ? 0 : obj.uid);
+    vformData.append("MaxWorkingMinutesFullDay", String(values.MaxWorkingMinutesFullDay || 0));
+    vformData.append("MinWorkingMinutesFullDay", String(values.MinWorkingMinutesFullDay || 0));
+    vformData.append("MaxWorkingMinutesHalfDay", String(values.MaxWorkingMinutesHalfDay || 0));
+    vformData.append("MinWorkingMinutesHalfDay", String(values.MinWorkingMinutesHalfDay || 0));
+    vformData.append("IsOvertimeApplicable", values.IsOvertimeApplicable ? "true" : "false");
+    vformData.append("GracePeriodMinutes", String(values.GracePeriodMinutes || 0));
+    vformData.append("UserId", String(userId));
 
     Fn_AddEditData(
       dispatch,
@@ -204,18 +211,27 @@ const AddEdit_ShiftMasterContainer = () => {
     }
   };
   
+  // Parse time from object if needed
+  const parseTimeFromObject = (timeData: any): string => {
+    if (!timeData) return "";
+    if (typeof timeData === "string") return timeData;
+    if (typeof timeData === "object" && timeData.time) return timeData.time;
+    if (typeof timeData === "object" && timeData.InTime) return timeData.InTime;
+    return "";
+  };
+
   const initialValues: FormValues = {
     Name: state.formData?.Name || "",
-    InTime: formatTimeForDisplay(state.formData?.InTime || ""),
-    OutTime: formatTimeForDisplay(state.formData?.OutTime || ""),
-    LunchInTime: formatTimeForDisplay(state.formData?.LunchInTime || ""),
-    LunchOutTime: formatTimeForDisplay(state.formData?.LunchOutTime || ""),
-    MaxWorkingHoursFullDay: state.formData?.MaxWorkingHoursFullDay || calculateWorkingHours(state.formData?.InTime || "", state.formData?.OutTime || ""),
-    MinWorkingHoursFullDay: state.formData?.MinWorkingHoursFullDay || "",
-    MaxWorkingHoursHalfDay: state.formData?.MaxWorkingHoursHalfDay || "",
-    MinWorkingHoursHalfDay: state.formData?.MinWorkingHoursHalfDay || "",
-    OverTimeApplicable: state.formData?.OverTimeApplicable || false,
-    GracePeriodMinsOverTime: state.formData?.GracePeriodMinsOverTime || "",
+    InTime: formatTimeForDisplay(parseTimeFromObject(state.formData?.InTime)),
+    OutTime: formatTimeForDisplay(parseTimeFromObject(state.formData?.OutTime)),
+    LunchInTime: formatTimeForDisplay(parseTimeFromObject(state.formData?.LunchInTime)),
+    LunchOutTime: formatTimeForDisplay(parseTimeFromObject(state.formData?.LunchOutTime)),
+    MaxWorkingMinutesFullDay: state.formData?.MaxWorkingMinutesFullDay || (state.formData?.MaxWorkingHoursFullDay ? (parseFloat(state.formData?.MaxWorkingHoursFullDay) * 60) : calculateWorkingMinutes(parseTimeFromObject(state.formData?.InTime), parseTimeFromObject(state.formData?.OutTime))),
+    MinWorkingMinutesFullDay: state.formData?.MinWorkingMinutesFullDay || (state.formData?.MinWorkingHoursFullDay ? (parseFloat(state.formData?.MinWorkingHoursFullDay) * 60) : 0),
+    MaxWorkingMinutesHalfDay: state.formData?.MaxWorkingMinutesHalfDay || (state.formData?.MaxWorkingHoursHalfDay ? (parseFloat(state.formData?.MaxWorkingHoursHalfDay) * 60) : 0),
+    MinWorkingMinutesHalfDay: state.formData?.MinWorkingMinutesHalfDay || (state.formData?.MinWorkingHoursHalfDay ? (parseFloat(state.formData?.MinWorkingHoursHalfDay) * 60) : 0),
+    IsOvertimeApplicable: state.formData?.IsOvertimeApplicable !== undefined ? state.formData.IsOvertimeApplicable : (state.formData?.OverTimeApplicable || false),
+    GracePeriodMinutes: state.formData?.GracePeriodMinutes || state.formData?.GracePeriodMinsOverTime || 0,
   };
 
   return (
@@ -293,9 +309,9 @@ const AddEdit_ShiftMasterContainer = () => {
                                 onChange={(e) => {
                                   setFieldValue("InTime", e.target.value);
                                   if (values.OutTime) {
-                                    const hours = calculateWorkingHours(e.target.value, values.OutTime);
-                                    if (hours) {
-                                      setFieldValue("MaxWorkingHoursFullDay", hours);
+                                    const minutes = calculateWorkingMinutes(e.target.value, values.OutTime);
+                                    if (minutes > 0) {
+                                      setFieldValue("MaxWorkingMinutesFullDay", minutes);
                                     }
                                   }
                                 }}
@@ -308,25 +324,36 @@ const AddEdit_ShiftMasterContainer = () => {
                                 type="text"
                                 name="InTime"
                                 placeholder="HH:MM AM/PM"
-                                value={values.InTime.includes("AM") || values.InTime.includes("PM") ? values.InTime : convertTo12Hour(values.InTime)}
+                                value={
+                                  values.InTime.includes("AM") || values.InTime.includes("PM") 
+                                    ? values.InTime 
+                                    : (values.InTime && values.InTime.includes(":") && values.InTime.split(":")[1] && values.InTime.split(":")[1].length === 2)
+                                      ? convertTo12Hour(values.InTime)
+                                      : values.InTime
+                                }
                                 onChange={(e) => {
-                                  const time24 = convertTo24Hour(e.target.value);
-                                  setFieldValue("InTime", time24);
-                                  if (values.OutTime) {
-                                    const hours = calculateWorkingHours(time24, values.OutTime);
-                                    if (hours) {
-                                      setFieldValue("MaxWorkingHoursFullDay", hours);
-                                    }
-                                  }
+                                  // Store raw input while typing, convert on blur
+                                  setFieldValue("InTime", e.target.value);
                                 }}
                                 onBlur={(e) => {
                                   const time24 = convertTo24Hour(e.target.value);
-                                  setFieldValue("InTime", time24);
+                                  // Convert back to 12-hour format for display and pattern validation
+                                  const time12 = convertTo12Hour(time24);
+                                  setFieldValue("InTime", time12);
+                                  if (values.OutTime) {
+                                    const outTime24 = values.OutTime.includes("AM") || values.OutTime.includes("PM") 
+                                      ? convertTo24Hour(values.OutTime) 
+                                      : values.OutTime;
+                                    const minutes = calculateWorkingMinutes(time24, outTime24);
+                                    if (minutes > 0) {
+                                      setFieldValue("MaxWorkingMinutesFullDay", minutes);
+                                    }
+                                  }
                                   handleBlur(e);
                                 }}
                                 onKeyDown={(e) => handleKeyDown(e, "InTime")}
                                 invalid={touched.InTime && !!errors.InTime}
-                                pattern="^(0?[1-9]|1[0-2]):[0-5][0-9]\\s?(AM|PM)$"
+                                pattern="^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$"
                                 title="Format: HH:MM AM/PM (e.g., 09:00 AM, 06:30 PM)"
                               />
                             )}
@@ -346,9 +373,9 @@ const AddEdit_ShiftMasterContainer = () => {
                                 onChange={(e) => {
                                   setFieldValue("OutTime", e.target.value);
                                   if (values.InTime) {
-                                    const hours = calculateWorkingHours(values.InTime, e.target.value);
-                                    if (hours) {
-                                      setFieldValue("MaxWorkingHoursFullDay", hours);
+                                    const minutes = calculateWorkingMinutes(values.InTime, e.target.value);
+                                    if (minutes > 0) {
+                                      setFieldValue("MaxWorkingMinutesFullDay", minutes);
                                     }
                                   }
                                 }}
@@ -361,25 +388,36 @@ const AddEdit_ShiftMasterContainer = () => {
                                 type="text"
                                 name="OutTime"
                                 placeholder="HH:MM AM/PM"
-                                value={values.OutTime.includes("AM") || values.OutTime.includes("PM") ? values.OutTime : convertTo12Hour(values.OutTime)}
+                                value={
+                                  values.OutTime.includes("AM") || values.OutTime.includes("PM") 
+                                    ? values.OutTime 
+                                    : (values.OutTime && values.OutTime.includes(":") && values.OutTime.split(":")[1] && values.OutTime.split(":")[1].length === 2)
+                                      ? convertTo12Hour(values.OutTime)
+                                      : values.OutTime
+                                }
                                 onChange={(e) => {
-                                  const time24 = convertTo24Hour(e.target.value);
-                                  setFieldValue("OutTime", time24);
-                                  if (values.InTime) {
-                                    const hours = calculateWorkingHours(values.InTime, time24);
-                                    if (hours) {
-                                      setFieldValue("MaxWorkingHoursFullDay", hours);
-                                    }
-                                  }
+                                  // Store raw input while typing, convert on blur
+                                  setFieldValue("OutTime", e.target.value);
                                 }}
                                 onBlur={(e) => {
                                   const time24 = convertTo24Hour(e.target.value);
-                                  setFieldValue("OutTime", time24);
+                                  // Convert back to 12-hour format for display and pattern validation
+                                  const time12 = convertTo12Hour(time24);
+                                  setFieldValue("OutTime", time12);
+                                  if (values.InTime) {
+                                    const inTime24 = values.InTime.includes("AM") || values.InTime.includes("PM") 
+                                      ? convertTo24Hour(values.InTime) 
+                                      : values.InTime;
+                                    const minutes = calculateWorkingMinutes(inTime24, time24);
+                                    if (minutes > 0) {
+                                      setFieldValue("MaxWorkingMinutesFullDay", minutes);
+                                    }
+                                  }
                                   handleBlur(e);
                                 }}
                                 onKeyDown={(e) => handleKeyDown(e, "OutTime")}
                                 invalid={touched.OutTime && !!errors.OutTime}
-                                pattern="^(0?[1-9]|1[0-2]):[0-5][0-9]\\s?(AM|PM)$"
+                                pattern="^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$"
                                 title="Format: HH:MM AM/PM (e.g., 09:00 AM, 06:30 PM)"
                               />
                             )}
@@ -406,19 +444,27 @@ const AddEdit_ShiftMasterContainer = () => {
                                 type="text"
                                 name="LunchInTime"
                                 placeholder="HH:MM AM/PM"
-                                value={values.LunchInTime.includes("AM") || values.LunchInTime.includes("PM") ? values.LunchInTime : convertTo12Hour(values.LunchInTime)}
+                                value={
+                                  values.LunchInTime.includes("AM") || values.LunchInTime.includes("PM") 
+                                    ? values.LunchInTime 
+                                    : (values.LunchInTime && values.LunchInTime.includes(":") && values.LunchInTime.split(":")[1] && values.LunchInTime.split(":")[1].length === 2)
+                                      ? convertTo12Hour(values.LunchInTime)
+                                      : values.LunchInTime
+                                }
                                 onChange={(e) => {
-                                  const time24 = convertTo24Hour(e.target.value);
-                                  setFieldValue("LunchInTime", time24);
+                                  // Store raw input while typing, convert on blur
+                                  setFieldValue("LunchInTime", e.target.value);
                                 }}
                                 onBlur={(e) => {
                                   const time24 = convertTo24Hour(e.target.value);
-                                  setFieldValue("LunchInTime", time24);
+                                  // Convert back to 12-hour format for display and pattern validation
+                                  const time12 = convertTo12Hour(time24);
+                                  setFieldValue("LunchInTime", time12);
                                   handleBlur(e);
                                 }}
                                 onKeyDown={(e) => handleKeyDown(e, "LunchInTime")}
                                 invalid={touched.LunchInTime && !!errors.LunchInTime}
-                                pattern="^(0?[1-9]|1[0-2]):[0-5][0-9]\\s?(AM|PM)$"
+                                pattern="^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$"
                                 title="Format: HH:MM AM/PM (e.g., 09:00 AM, 06:30 PM)"
                               />
                             )}
@@ -445,19 +491,27 @@ const AddEdit_ShiftMasterContainer = () => {
                                 type="text"
                                 name="LunchOutTime"
                                 placeholder="HH:MM AM/PM"
-                                value={values.LunchOutTime.includes("AM") || values.LunchOutTime.includes("PM") ? values.LunchOutTime : convertTo12Hour(values.LunchOutTime)}
+                                value={
+                                  values.LunchOutTime.includes("AM") || values.LunchOutTime.includes("PM") 
+                                    ? values.LunchOutTime 
+                                    : (values.LunchOutTime && values.LunchOutTime.includes(":") && values.LunchOutTime.split(":")[1] && values.LunchOutTime.split(":")[1].length === 2)
+                                      ? convertTo12Hour(values.LunchOutTime)
+                                      : values.LunchOutTime
+                                }
                                 onChange={(e) => {
-                                  const time24 = convertTo24Hour(e.target.value);
-                                  setFieldValue("LunchOutTime", time24);
+                                  // Store raw input while typing, convert on blur
+                                  setFieldValue("LunchOutTime", e.target.value);
                                 }}
                                 onBlur={(e) => {
                                   const time24 = convertTo24Hour(e.target.value);
-                                  setFieldValue("LunchOutTime", time24);
+                                  // Convert back to 12-hour format for display and pattern validation
+                                  const time12 = convertTo12Hour(time24);
+                                  setFieldValue("LunchOutTime", time12);
                                   handleBlur(e);
                                 }}
                                 onKeyDown={(e) => handleKeyDown(e, "LunchOutTime")}
                                 invalid={touched.LunchOutTime && !!errors.LunchOutTime}
-                                pattern="^(0?[1-9]|1[0-2]):[0-5][0-9]\\s?(AM|PM)$"
+                                pattern="^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$"
                                 title="Format: HH:MM AM/PM (e.g., 09:00 AM, 06:30 PM)"
                               />
                             )}
@@ -467,115 +521,112 @@ const AddEdit_ShiftMasterContainer = () => {
                         <Col md="6">
                           <FormGroup>
                             <Label>
-                              Max. Working Hours Full Day <span className="text-danger">*</span>
+                              Max. Working Minutes Full Day <span className="text-danger">*</span>
                             </Label>
                             <Input
-                              type="text"
-                              name="MaxWorkingHoursFullDay"
+                              type="number"
+                              name="MaxWorkingMinutesFullDay"
                               placeholder="Auto-filled from In/Out Time"
-                              value={values.MaxWorkingHoursFullDay}
+                              value={values.MaxWorkingMinutesFullDay}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "MaxWorkingHoursFullDay")}
-                              invalid={touched.MaxWorkingHoursFullDay && !!errors.MaxWorkingHoursFullDay}
+                              onKeyDown={(e) => handleKeyDown(e, "MaxWorkingMinutesFullDay")}
+                              invalid={touched.MaxWorkingMinutesFullDay && !!errors.MaxWorkingMinutesFullDay}
                               readOnly
                               style={{ backgroundColor: "#f8f9fa" }}
                             />
-                            <ErrorMessage name="MaxWorkingHoursFullDay" component="div" className="text-danger small" />
+                            <ErrorMessage name="MaxWorkingMinutesFullDay" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                         <Col md="6">
                           <FormGroup>
                             <Label>
-                              Min. Working Hours Full Day <span className="text-danger">*</span>
+                              Min. Working Minutes Full Day <span className="text-danger">*</span>
                             </Label>
                             <Input
                               type="number"
-                              name="MinWorkingHoursFullDay"
-                              placeholder="Enter Min Working Hours Full Day"
-                              value={values.MinWorkingHoursFullDay}
+                              name="MinWorkingMinutesFullDay"
+                              placeholder="Enter Min Working Minutes Full Day"
+                              value={values.MinWorkingMinutesFullDay}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "MinWorkingHoursFullDay")}
-                              invalid={touched.MinWorkingHoursFullDay && !!errors.MinWorkingHoursFullDay}
-                              step="0.01"
+                              onKeyDown={(e) => handleKeyDown(e, "MinWorkingMinutesFullDay")}
+                              invalid={touched.MinWorkingMinutesFullDay && !!errors.MinWorkingMinutesFullDay}
                             />
-                            <ErrorMessage name="MinWorkingHoursFullDay" component="div" className="text-danger small" />
+                            <ErrorMessage name="MinWorkingMinutesFullDay" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                         <Col md="6">
                           <FormGroup>
                             <Label>
-                              Max. Working Hours (Half Day) <span className="text-danger">*</span>
+                              Max. Working Minutes (Half Day) <span className="text-danger">*</span>
                             </Label>
                             <Input
                               type="number"
-                              name="MaxWorkingHoursHalfDay"
-                              placeholder="Enter Max Working Hours Half Day"
-                              value={values.MaxWorkingHoursHalfDay}
+                              name="MaxWorkingMinutesHalfDay"
+                              placeholder="Enter Max Working Minutes Half Day"
+                              value={values.MaxWorkingMinutesHalfDay}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "MaxWorkingHoursHalfDay")}
-                              invalid={touched.MaxWorkingHoursHalfDay && !!errors.MaxWorkingHoursHalfDay}
-                              step="0.01"
+                              onKeyDown={(e) => handleKeyDown(e, "MaxWorkingMinutesHalfDay")}
+                              invalid={touched.MaxWorkingMinutesHalfDay && !!errors.MaxWorkingMinutesHalfDay}
                             />
-                            <ErrorMessage name="MaxWorkingHoursHalfDay" component="div" className="text-danger small" />
+                            <ErrorMessage name="MaxWorkingMinutesHalfDay" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                         <Col md="6">
                           <FormGroup>
                             <Label>
-                              Min. Working Hours (Half Day) <span className="text-danger">*</span>
+                              Min. Working Minutes (Half Day) <span className="text-danger">*</span>
                             </Label>
                             <Input
                               type="number"
-                              name="MinWorkingHoursHalfDay"
-                              placeholder="Enter Min Working Hours Half Day"
-                              value={values.MinWorkingHoursHalfDay}
+                              name="MinWorkingMinutesHalfDay"
+                              placeholder="Enter Min Working Minutes Half Day"
+                              value={values.MinWorkingMinutesHalfDay}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "MinWorkingHoursHalfDay")}
-                              invalid={touched.MinWorkingHoursHalfDay && !!errors.MinWorkingHoursHalfDay}
-                              step="0.01"
+                              onKeyDown={(e) => handleKeyDown(e, "MinWorkingMinutesHalfDay")}
+                              invalid={touched.MinWorkingMinutesHalfDay && !!errors.MinWorkingMinutesHalfDay}
                             />
-                            <ErrorMessage name="MinWorkingHoursHalfDay" component="div" className="text-danger small" />
+                            <ErrorMessage name="MinWorkingMinutesHalfDay" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                         <Col md="6">
                           <FormGroup>
                             <Label>
-                              Grace period  <span className="text-danger">*</span>
+                              Grace Period Minutes <span className="text-danger">*</span>
                             </Label>
                             <Input
                               type="number"
-                              name="GracePeriodMinsOverTime"
-                              placeholder="Enter Grace Period Mins"
-                              value={values.GracePeriodMinsOverTime}
+                              name="GracePeriodMinutes"
+                              placeholder="Enter Grace Period Minutes"
+                              value={values.GracePeriodMinutes}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "GracePeriodMinsOverTime")}
-                              invalid={touched.GracePeriodMinsOverTime && !!errors.GracePeriodMinsOverTime}
+                              onKeyDown={(e) => handleKeyDown(e, "GracePeriodMinutes")}
+                              invalid={touched.GracePeriodMinutes && !!errors.GracePeriodMinutes}
                             />
-                            <ErrorMessage name="GracePeriodMinsOverTime" component="div" className="text-danger small" />
+                            <ErrorMessage name="GracePeriodMinutes" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                         <Col md="6">
                           <FormGroup>
                             <Label>
-                              Overtime Applicable <span className="text-danger">*</span>
+                              Is Overtime Applicable <span className="text-danger">*</span>
                             </Label>
                             <div className="form-check form-switch">
                               <Input
                                 type="checkbox"
-                                name="OverTimeApplicable"
-                                checked={values.OverTimeApplicable}
-                                onChange={(e) => setFieldValue("OverTimeApplicable", e.target.checked)}
-                                onKeyDown={(e) => handleKeyDown(e, "OverTimeApplicable")}
+                                name="IsOvertimeApplicable"
+                                checked={values.IsOvertimeApplicable}
+                                onChange={(e) => setFieldValue("IsOvertimeApplicable", e.target.checked)}
+                                onKeyDown={(e) => handleKeyDown(e, "IsOvertimeApplicable")}
                                 className="form-check-input"
                                 role="switch"
                               />
                               <Label check className="form-check-label">
-                                {values.OverTimeApplicable ? "Yes" : "No"}
+                                {values.IsOvertimeApplicable ? "Yes" : "No"}
                               </Label>
                             </div>
                           </FormGroup>

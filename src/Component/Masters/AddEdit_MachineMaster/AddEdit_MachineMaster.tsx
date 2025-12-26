@@ -13,15 +13,18 @@ import { API_WEB_URLS } from "../../../constants/constAPI";
 
 interface FormValues {
   Name: string;
+  F_MachineTypeMaster: number | string;
 }
 
-const API_URL_SAVE = "MachineTypeMaster/0/token";
-const API_URL_EDIT = API_WEB_URLS.MASTER + "/0/token/MachineTypeMaster/Id";
+const API_URL_SAVE = "MachineMaster/0/token";
+const API_URL_EDIT = API_WEB_URLS.MASTER + "/0/token/MachineMaster/Id";
+const API_URL_MACHINE_TYPE = API_WEB_URLS.MASTER + "/0/token/MachineTypeMaster/Id/0";
 
-const AddEdit_MachineTypeMasterContainer = () => {
+const AddEdit_MachineMasterContainer = () => {
   const [state, setState] = useState({
     id: 0,
     FillArray: [],
+    MachineTypeArray: [] as any[],
     formData: {} as any,
     OtherDataScore: [],
     isProgress: true,
@@ -32,22 +35,26 @@ const AddEdit_MachineTypeMasterContainer = () => {
   const navigate = useNavigate();
 
   // Handle Enter key to move to next field
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, currentFieldName: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>, currentFieldName: string) => {
     if (e.key === "Enter") {
       e.preventDefault();
       const form = e.currentTarget.form;
       if (!form) return;
 
       // Define field order
-      const fieldOrder = ["Name"];
+      const fieldOrder = ["Name", "F_MachineTypeMaster"];
       const currentIndex = fieldOrder.indexOf(currentFieldName);
 
       if (currentIndex < fieldOrder.length - 1) {
         // Move to next field
         const nextFieldName = fieldOrder[currentIndex + 1];
-        const nextInput = form.querySelector(`input[name="${nextFieldName}"]`) as HTMLInputElement;
+        const nextInput = form.querySelector(`input[name="${nextFieldName}"], select[name="${nextFieldName}"]`) as HTMLInputElement | HTMLSelectElement;
         if (nextInput) {
-          nextInput.focus();
+          if (nextInput instanceof HTMLInputElement && !nextInput.readOnly) {
+            nextInput.focus();
+          } else if (nextInput instanceof HTMLSelectElement) {
+            nextInput.focus();
+          }
         }
       } else {
         // Last field, focus Save button
@@ -79,6 +86,10 @@ const AddEdit_MachineTypeMasterContainer = () => {
       navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
       return;
     }
+
+    // Load MachineType data for dropdown
+    Fn_FillListData(dispatch, setState, "MachineTypeArray", API_URL_MACHINE_TYPE);
+
     const Id = (location.state && (location.state as any).Id) || 0;
 
     if (Id > 0) {
@@ -105,6 +116,7 @@ const AddEdit_MachineTypeMasterContainer = () => {
 
   const validationSchema = Yup.object({
     Name: Yup.string().required("Name is required"),
+    F_MachineTypeMaster: Yup.number().nullable().required("Machine Type is required"),
   });
 
   const handleSubmit = (values: FormValues) => {
@@ -121,6 +133,7 @@ const AddEdit_MachineTypeMasterContainer = () => {
     
     let vformData = new FormData();
     vformData.append("Name", values.Name);
+    vformData.append("F_MachineTypeMaster", values.F_MachineTypeMaster ? String(values.F_MachineTypeMaster) : "");
     vformData.append("UserId", String(userId));
 
     Fn_AddEditData(
@@ -131,26 +144,29 @@ const AddEdit_MachineTypeMasterContainer = () => {
       true,
       "memberid",
       navigate,
-      "/machineTypeMaster"
+      "/machineMaster"
     );
   };
 
   const isEditMode = state.id > 0;
   const initialValues: FormValues = {
-    Name: state.formData?.Name || state.formData?.MachineType || state.formData?.MachineName || "",
+    Name: state.formData?.Name || "",
+    F_MachineTypeMaster: state.formData?.F_MachineTypeMaster || state.formData?.MachineTypeId || "",
   };
 
   return (
     <>
       <style>{`
-        .theme-form input[type="text"] {
+        .theme-form input[type="text"],
+        .theme-form select {
           color: #000000 !important;
         }
-        body.dark-only .theme-form input[type="text"] {
+        body.dark-only .theme-form input[type="text"],
+        body.dark-only .theme-form select {
           color: #ffffff !important;
         }
       `}</style>
-      <Breadcrumbs mainTitle="Machine Type Master" parent="Masters" />
+      <Breadcrumbs mainTitle="Machine Master" parent="Masters" />
       <Container fluid>
         <Row>
           <Col xs="12">
@@ -164,7 +180,7 @@ const AddEdit_MachineTypeMasterContainer = () => {
                 <Form className="theme-form">
                   <Card>
                     <CardHeaderCommon
-                      title={`${isEditMode ? "Edit" : "Add"} Machine Type Master`}
+                      title={`${isEditMode ? "Edit" : "Add"} Machine Master`}
                       tagClass="card-title mb-0"
                     />
                     <CardBody>
@@ -187,6 +203,31 @@ const AddEdit_MachineTypeMasterContainer = () => {
                             <ErrorMessage name="Name" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
+                        <Col md="6">
+                          <FormGroup>
+                            <Label>
+                              Machine Type <span className="text-danger">*</span>
+                            </Label>
+                            <Input
+                              type="select"
+                              name="F_MachineTypeMaster"
+                              value={values.F_MachineTypeMaster}
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              onKeyDown={(e) => handleKeyDown(e, "F_MachineTypeMaster")}
+                              className="btn-square"
+                              invalid={touched.F_MachineTypeMaster && !!errors.F_MachineTypeMaster}
+                            >
+                              <option value="">Select Machine Type</option>
+                              {state.MachineTypeArray.map((item: any) => (
+                                <option key={item.Id} value={item.Id}>
+                                  {item.Name || `Machine Type ${item.Id}`}
+                                </option>
+                              ))}
+                            </Input>
+                            <ErrorMessage name="F_MachineTypeMaster" component="div" className="text-danger small" />
+                          </FormGroup>
+                        </Col>
                       </Row>
                     </CardBody>
                     <CardFooter className="text-end">
@@ -194,11 +235,11 @@ const AddEdit_MachineTypeMasterContainer = () => {
                         color="secondary"
                         type="button"
                         className="me-2"
-                        onClick={() => navigate("/machineTypeMaster")}
+                        onClick={() => navigate("/machineMaster")}
                       >
                         Cancel
                       </Btn>
-                      <Btn color="primary" type="submit">
+                      <Btn color="primary" type="submit" id="submitButton">
                         {isEditMode ? "Update" : "Submit"}
                       </Btn>
                     </CardFooter>
@@ -213,5 +254,5 @@ const AddEdit_MachineTypeMasterContainer = () => {
   );
 };
 
-export default AddEdit_MachineTypeMasterContainer;
+export default AddEdit_MachineMasterContainer;
 

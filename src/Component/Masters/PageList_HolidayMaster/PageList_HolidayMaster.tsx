@@ -45,9 +45,22 @@ const PageList_HolidayMasterContainer = () => {
 
   const loadData = async () => {
     setLoading(true);
-    await Fn_FillListData(dispatch, setGridData, "gridData", API_URL + "/Id/0");
+    try {
+      const data = await Fn_FillListData(dispatch, setGridData, "gridData", API_URL + "/Id/0");
+      console.log("HolidayMaster - Loaded data:", data);
+    } catch (error) {
+      console.error("HolidayMaster - Error loading data:", error);
+    }
     setLoading(false);
   };
+
+  // Debug: Log gridData when it changes
+  useEffect(() => {
+    console.log("HolidayMaster - gridData updated:", gridData);
+    if (gridData && gridData.length > 0) {
+      console.log("HolidayMaster - First item:", gridData[0]);
+    }
+  }, [gridData]);
 
   const handleEdit = (id: number) => {
     navigate("/addEdit_HolidayMaster", { state: { Id: id } });
@@ -79,6 +92,8 @@ const PageList_HolidayMasterContainer = () => {
     const searchText = filterText.toLowerCase();
     return (
       (item.Name && item.Name.toLowerCase().includes(searchText)) ||
+      (item.FromDate && item.FromDate.toLowerCase().includes(searchText)) ||
+      (item.ToDate && item.ToDate.toLowerCase().includes(searchText)) ||
       (item.StartingFrom && item.StartingFrom.toLowerCase().includes(searchText)) ||
       (item.EndTo && item.EndTo.toLowerCase().includes(searchText))
     );
@@ -130,8 +145,8 @@ const PageList_HolidayMasterContainer = () => {
                         <tr>
                           <th>#</th>
                           <th>Name</th>
-                          <th>Starting From</th>
-                          <th>End To</th>
+                          <th>From Date</th>
+                          <th>To Date</th>
                           <th style={{ width: "150px", textAlign: "center" }}>Actions</th>
                         </tr>
                       </thead>
@@ -147,8 +162,8 @@ const PageList_HolidayMasterContainer = () => {
                             <tr key={item.Id || index}>
                               <td>{index + 1}</td>
                               <td>{item.Name || "-"}</td>
-                              <td>{formatDate(item.StartingFrom)}</td>
-                              <td>{formatDate(item.EndTo)}</td>
+                              <td>{formatDate(item.FromDate || item.StartingFrom)}</td>
+                              <td>{formatDate(item.ToDate || item.EndTo)}</td>
                               <td style={{ width: "150px", whiteSpace: "nowrap" }}>
                                 <Btn
                                   color="primary"

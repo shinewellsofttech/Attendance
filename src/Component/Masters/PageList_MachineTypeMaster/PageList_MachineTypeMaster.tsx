@@ -44,9 +44,22 @@ const PageList_MachineTypeMasterContainer = () => {
 
   const loadData = async () => {
     setLoading(true);
-    await Fn_FillListData(dispatch, setGridData, "gridData", API_URL + "/Id/0");
+    try {
+      const data = await Fn_FillListData(dispatch, setGridData, "gridData", API_URL + "/Id/0");
+      console.log("MachineTypeMaster - Loaded data:", data);
+    } catch (error) {
+      console.error("MachineTypeMaster - Error loading data:", error);
+    }
     setLoading(false);
   };
+
+  // Debug: Log gridData when it changes
+  useEffect(() => {
+    console.log("MachineTypeMaster - gridData updated:", gridData);
+    if (gridData && gridData.length > 0) {
+      console.log("MachineTypeMaster - First item:", gridData[0]);
+    }
+  }, [gridData]);
 
   const handleEdit = (id: number) => {
     navigate("/addEdit_MachineTypeMaster", { state: { Id: id } });
@@ -73,6 +86,7 @@ const PageList_MachineTypeMasterContainer = () => {
   const filteredData = (Array.isArray(gridData) ? gridData : []).filter((item: any) => {
     const searchText = filterText.toLowerCase();
     return (
+      (item.Name && item.Name.toLowerCase().includes(searchText)) ||
       (item.MachineType && item.MachineType.toLowerCase().includes(searchText)) ||
       (item.MachineName && item.MachineName.toLowerCase().includes(searchText))
     );
@@ -96,7 +110,7 @@ const PageList_MachineTypeMasterContainer = () => {
                       <Label className="me-2">Search:</Label>
                       <Input
                         type="search"
-                        placeholder="Search by machine type or machine name..."
+                        placeholder="Search by name..."
                         value={filterText}
                         onChange={(e) => setFilterText(e.target.value)}
                       />
@@ -123,15 +137,14 @@ const PageList_MachineTypeMasterContainer = () => {
                       <thead>
                         <tr>
                           <th>#</th>
-                          <th>Machine Type</th>
-                          <th>Machine Name</th>
+                          <th>Name</th>
                           <th style={{ width: "150px", textAlign: "center" }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredData.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="text-center p-4">
+                            <td colSpan={3} className="text-center p-4">
                               No data found
                             </td>
                           </tr>
@@ -139,8 +152,7 @@ const PageList_MachineTypeMasterContainer = () => {
                           filteredData.map((item: any, index: number) => (
                             <tr key={item.Id || index}>
                               <td>{index + 1}</td>
-                              <td>{item.MachineType || "-"}</td>
-                              <td>{item.MachineName || "-"}</td>
+                              <td>{item.Name || item.MachineType || item.MachineName || "-"}</td>
                               <td style={{ width: "150px", whiteSpace: "nowrap" }}>
                                 <Btn
                                   color="primary"

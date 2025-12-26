@@ -12,15 +12,15 @@ import { Fn_FillListData, Fn_DisplayData, Fn_AddEditData } from "../../../store/
 import { API_WEB_URLS } from "../../../constants/constAPI";
 
 interface FormValues {
-  CompanyName: string;
-  UserName: string;
+  Name: string;
+  Username: string;
   Address: string;
-  F_StateMaster: string;
-  F_CityMaster: string;
+  F_StateMaster: number | string;
+  F_CityMaster: number | string;
   PFNo: string;
   ESINo: string;
   Signature: string;
-  NatureOfBusiness: string;
+  F_NatureOfBusiness: number | string;
   UserPassword: string;
 }
 
@@ -28,6 +28,7 @@ const API_URL_SAVE = "CompanyMaster/0/token";
 const API_URL_EDIT = API_WEB_URLS.MASTER + "/0/token/CompanyMaster/Id";
 const API_URL_STATE = API_WEB_URLS.MASTER + "/0/token/StateMaster/Id/0";
 const API_URL_CITY = API_WEB_URLS.MASTER + "/0/token/CityMaster/Id/0";
+const API_URL_NATURE_OF_BUSINESS = API_WEB_URLS.MASTER + "/0/token/NatureOfBusinessMaster/Id/0";
 
 const AddEdit_CompanyMasterContainer = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -36,6 +37,7 @@ const AddEdit_CompanyMasterContainer = () => {
     FillArray: [],
     StateArray: [] as any[],
     CityArray: [] as any[],
+    NatureOfBusinessArray: [] as any[],
     formData: {} as any,
     OtherDataScore: [],
     isProgress: true,
@@ -53,7 +55,7 @@ const AddEdit_CompanyMasterContainer = () => {
       if (!form) return;
 
       // Define field order
-      const fieldOrder = ["CompanyName", "UserName", "UserPassword", "Address", "F_StateMaster", "F_CityMaster", "PFNo", "ESINo", "NatureOfBusiness", "Signature"];
+      const fieldOrder = ["Name", "Username", "UserPassword", "Address", "F_StateMaster", "F_CityMaster", "PFNo", "ESINo", "F_NatureOfBusiness", "Signature"];
       const currentIndex = fieldOrder.indexOf(currentFieldName);
 
       if (currentIndex < fieldOrder.length - 1) {
@@ -101,6 +103,8 @@ const AddEdit_CompanyMasterContainer = () => {
     }
     // Load State data for dropdown
     Fn_FillListData(dispatch, setState, "StateArray", API_URL_STATE);
+    // Load NatureOfBusiness data for dropdown
+    Fn_FillListData(dispatch, setState, "NatureOfBusinessArray", API_URL_NATURE_OF_BUSINESS);
 
     const Id = (location.state && (location.state as any).Id) || 0;
 
@@ -117,7 +121,7 @@ const AddEdit_CompanyMasterContainer = () => {
   useEffect(() => {
     if (!state.isProgress) {
       const timer = setTimeout(() => {
-        const firstInput = document.querySelector('.theme-form input[name="CompanyName"]') as HTMLInputElement;
+        const firstInput = document.querySelector('.theme-form input[name="Name"]') as HTMLInputElement;
         if (firstInput && !firstInput.readOnly) {
           firstInput.focus();
         }
@@ -127,14 +131,14 @@ const AddEdit_CompanyMasterContainer = () => {
   }, [state.isProgress, state.formData]);
 
   const validationSchema = Yup.object({
-    CompanyName: Yup.string(),
-    UserName: Yup.string().required("UserName is required"),
+    Name: Yup.string(),
+    Username: Yup.string().required("Username is required"),
     Address: Yup.string(),
-    F_StateMaster: Yup.string(),
-    F_CityMaster: Yup.string(),
+    F_StateMaster: Yup.number().nullable(),
+    F_CityMaster: Yup.number().nullable(),
     PFNo: Yup.string(),
     ESINo: Yup.string(),
-    NatureOfBusiness: Yup.string(),
+    F_NatureOfBusiness: Yup.number().nullable(),
     Signature: Yup.string(),
     UserPassword: Yup.string()
       .required("UserPassword is required")
@@ -142,20 +146,29 @@ const AddEdit_CompanyMasterContainer = () => {
   });
 
   const handleSubmit = (values: FormValues) => {
-    const obj = JSON.parse(localStorage.getItem("user") || "{}");
+    let userId = 0;
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const obj = JSON.parse(userStr);
+        userId = (obj && (obj.uid || obj.Id)) ? (obj.uid || obj.Id) : 0;
+      }
+    } catch (error) {
+      console.error("Error parsing user from localStorage:", error);
+    }
+    
     let vformData = new FormData();
-
-    vformData.append("CompanyName", values.CompanyName);
-    vformData.append("UserName", values.UserName);
+    vformData.append("Name", values.Name);
+    vformData.append("Username", values.Username);
     vformData.append("UserPassword", values.UserPassword);
     vformData.append("Address", values.Address);
-    vformData.append("F_StateMaster", values.F_StateMaster || "");
-    vformData.append("F_CityMaster", values.F_CityMaster || "");
+    vformData.append("F_StateMaster", values.F_StateMaster ? String(values.F_StateMaster) : "");
+    vformData.append("F_CityMaster", values.F_CityMaster ? String(values.F_CityMaster) : "");
     vformData.append("PFNo", values.PFNo);
     vformData.append("ESINo", values.ESINo);
-    vformData.append("NatureOfBusiness", values.NatureOfBusiness);
+    vformData.append("F_NatureOfBusiness", values.F_NatureOfBusiness ? String(values.F_NatureOfBusiness) : "");
     vformData.append("Signature", values.Signature);
-    vformData.append("UserId", obj === null || obj === undefined ? 0 : obj.uid);
+    vformData.append("UserId", String(userId));
 
     Fn_AddEditData(
       dispatch,
@@ -171,8 +184,8 @@ const AddEdit_CompanyMasterContainer = () => {
 
   const isEditMode = state.id > 0;
   const initialValues: FormValues = {
-    CompanyName: state.formData?.CompanyName || "",
-    UserName: state.formData?.UserName || "",
+    Name: state.formData?.Name || state.formData?.CompanyName || "",
+    Username: state.formData?.Username || state.formData?.UserName || "",
     UserPassword: state.formData?.UserPassword || "",
     Address: state.formData?.Address || "",
     F_StateMaster: state.formData?.F_StateMaster || state.formData?.StateId || "",
@@ -180,7 +193,7 @@ const AddEdit_CompanyMasterContainer = () => {
     PFNo: state.formData?.PFNo || "",
     ESINo: state.formData?.ESINo || "",
     Signature: state.formData?.Signature || "",
-    NatureOfBusiness: state.formData?.NatureOfBusiness || "",
+    F_NatureOfBusiness: state.formData?.F_NatureOfBusiness || state.formData?.NatureOfBusiness || "",
   };
 
   // Load all cities on mount (will be filtered by selected state)
@@ -214,7 +227,8 @@ const AddEdit_CompanyMasterContainer = () => {
                 // Filter cities based on selected state
                 const filteredCities = state.CityArray.filter((city: any) => {
                   if (!values.F_StateMaster) return false;
-                  return city.F_StateMaster === parseInt(values.F_StateMaster) || city.StateId === parseInt(values.F_StateMaster);
+                  const stateId = typeof values.F_StateMaster === 'string' ? parseInt(values.F_StateMaster) : values.F_StateMaster;
+                  return city.F_StateMaster === stateId || city.StateId === stateId;
                 });
 
                 // Load cities when state changes
@@ -236,37 +250,37 @@ const AddEdit_CompanyMasterContainer = () => {
                         <Col md="6">
                           <FormGroup>
                             <Label>
-                              Company Name <span className="text-danger">*</span>
+                              Name <span className="text-danger">*</span>
                             </Label>
                             <Input
                               type="text"
-                              name="CompanyName"
-                              placeholder="Enter Company Name"
-                              value={values.CompanyName}
+                              name="Name"
+                              placeholder="Enter Name"
+                              value={values.Name}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "CompanyName")}
-                              invalid={touched.CompanyName && !!errors.CompanyName}
+                              onKeyDown={(e) => handleKeyDown(e, "Name")}
+                              invalid={touched.Name && !!errors.Name}
                             />
-                            <ErrorMessage name="CompanyName" component="div" className="text-danger small" />
+                            <ErrorMessage name="Name" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                         <Col md="6">
                           <FormGroup>
                             <Label>
-                              UserName <span className="text-danger">*</span>
+                              Username <span className="text-danger">*</span>
                             </Label>
                             <Input
                               type="text"
-                              name="UserName"
-                              placeholder="Enter UserName"
-                              value={values.UserName}
+                              name="Username"
+                              placeholder="Enter Username"
+                              value={values.Username}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "UserName")}
-                              invalid={touched.UserName && !!errors.UserName}
+                              onKeyDown={(e) => handleKeyDown(e, "Username")}
+                              invalid={touched.Username && !!errors.Username}
                             />
-                            <ErrorMessage name="UserName" component="div" className="text-danger small" />
+                            <ErrorMessage name="Username" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                         <Col md="6">
@@ -426,16 +440,23 @@ const AddEdit_CompanyMasterContainer = () => {
                               Nature Of Business
                             </Label>
                             <Input
-                              type="text"
-                              name="NatureOfBusiness"
-                              placeholder="Enter Nature Of Business"
-                              value={values.NatureOfBusiness}
+                              type="select"
+                              name="F_NatureOfBusiness"
+                              value={values.F_NatureOfBusiness}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "NatureOfBusiness")}
-                              invalid={touched.NatureOfBusiness && !!errors.NatureOfBusiness}
-                            />
-                            <ErrorMessage name="NatureOfBusiness" component="div" className="text-danger small" />
+                              onKeyDown={(e) => handleKeyDown(e, "F_NatureOfBusiness")}
+                              className="btn-square"
+                              invalid={touched.F_NatureOfBusiness && !!errors.F_NatureOfBusiness}
+                            >
+                              <option value="">Select Nature Of Business</option>
+                              {state.NatureOfBusinessArray.map((item: any) => (
+                                <option key={item.Id} value={item.Id}>
+                                  {item.Name || `Nature Of Business ${item.Id}`}
+                                </option>
+                              ))}
+                            </Input>
+                            <ErrorMessage name="F_NatureOfBusiness" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                         <Col md="6">

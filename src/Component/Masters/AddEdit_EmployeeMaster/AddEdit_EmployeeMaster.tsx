@@ -18,15 +18,20 @@ interface FormValues {
   // Tab 1 Fields
   Name: string;
   FatherName: string;
+  MotherName: string;
+  WifeName: string;
   MachineEnrollmentNo: string;
   DateOfBirth: string;
   Age: string;
+  FatherDateOfBirth: string;
+  MotherDateOfBirth: string;
+  WifeDateOfBirth: string;
   DateOfJoining: string;
   Gender: string;
   MobileNo: string;
   Address: string;
-  WorkingStatus: string;
-  SelectShift: string;
+  F_WorkingStatusMaster: number | string;
+  F_ShiftMaster: number | string;
   // Tab 2 Fields
   InTime: string;
   OutTime: string;
@@ -38,13 +43,7 @@ interface FormValues {
   GracePeriodMinsOverTime: string;
   WeeklyHoliday: string;
   MaxAllowedLeavesPerMonth: string;
-  // Tab 3 Fields - Family Details
-  FathersName: string;
-  FathersDateOfBirth: string;
-  MothersName: string;
-  MothersDateOfBirth: string;
-  WifesName: string;
-  WifesDateOfBirth: string;
+  // Tab 3 Fields - Family Details (removed, moved to Tab 1)
   // Tab 3 Fields - Children (dynamic)
   Children: Array<{
     Name: string;
@@ -54,15 +53,15 @@ interface FormValues {
   // Tab 3 Fields - Qualification
   Qualification: string;
   // Tab 3 Fields - Documents
-  Document1Type: string;
-  Document1No: string;
-  Document2Type: string;
-  Document2No: string;
+  F_DocumentType1: number | string;
+  F_DocumentType2: number | string;
 }
 
 const API_URL_SAVE = "EmployeeMaster/0/token";
 const API_URL_EDIT = API_WEB_URLS.MASTER + "/0/token/EmployeeMaster/Id";
 const API_URL_SHIFT = API_WEB_URLS.MASTER + "/0/token/ShiftMaster/Id/0";
+const API_URL_WORKING_STATUS = API_WEB_URLS.MASTER + "/0/token/WorkingStatusMaster/Id/0";
+const API_URL_DOCUMENT_TYPE = API_WEB_URLS.MASTER + "/0/token/DocumentTypeMaster/Id/0";
 
 const AddEdit_EmployeeMasterContainer = () => {
   const [activeTab, setActiveTab] = useState("1");
@@ -71,6 +70,8 @@ const AddEdit_EmployeeMasterContainer = () => {
     id: 0,
     FillArray: [],
     ShiftArray: [] as any[],
+    WorkingStatusArray: [] as any[],
+    DocumentTypeArray: [] as any[],
     formData: {} as any,
     OtherDataScore: [],
     isProgress: true,
@@ -94,9 +95,9 @@ const AddEdit_EmployeeMasterContainer = () => {
       if (!form) return;
 
       // Define field order for each tab
-      const tab1Fields = ["Name", "FatherName", "MachineEnrollmentNo", "DateOfBirth", "DateOfJoining", "Gender", "MobileNo", "Address", "WorkingStatus", "SelectShift"];
+      const tab1Fields = ["Name", "FatherName", "MotherName", "WifeName", "MachineEnrollmentNo", "DateOfBirth", "FatherDateOfBirth", "MotherDateOfBirth", "WifeDateOfBirth", "DateOfJoining", "Gender", "MobileNo", "Address", "F_WorkingStatusMaster", "F_ShiftMaster"];
       const tab2Fields = ["InTime", "OutTime", "MinWorkingHoursFullDay", "MaxWorkingHoursHalfDay", "MinWorkingHoursHalfDay", "GracePeriodMinsOverTime", "WeeklyHoliday", "MaxAllowedLeavesPerMonth"];
-      const tab3Fields = ["FathersName", "FathersDateOfBirth", "MothersName", "MothersDateOfBirth", "WifesName", "WifesDateOfBirth", "Qualification", "Document1Type", "Document1No", "Document2Type", "Document2No"];
+      const tab3Fields = ["Qualification", "F_DocumentType1", "F_DocumentType2"];
       
       let fieldOrder: string[] = [];
       if (activeTab === "1") fieldOrder = tab1Fields;
@@ -159,8 +160,10 @@ const AddEdit_EmployeeMasterContainer = () => {
       return;
     }
 
-    // Load Shift data for dropdown
+    // Load Shift, WorkingStatus, and DocumentType data for dropdowns
     Fn_FillListData(dispatch, setState, "ShiftArray", API_URL_SHIFT);
+    Fn_FillListData(dispatch, setState, "WorkingStatusArray", API_URL_WORKING_STATUS);
+    Fn_FillListData(dispatch, setState, "DocumentTypeArray", API_URL_DOCUMENT_TYPE);
 
     const Id = (location.state && (location.state as any).Id) || 0;
 
@@ -234,8 +237,13 @@ const AddEdit_EmployeeMasterContainer = () => {
     Gender: Yup.string().required("Gender is required"),
     MobileNo: Yup.string().required("Mobile No. is required"),
     Address: Yup.string().required("Address is required"),
-    WorkingStatus: Yup.string().required("Working Status is required"),
-    SelectShift: Yup.string().required("Select Shift is required"),
+    F_WorkingStatusMaster: Yup.number().nullable().required("Working Status is required"),
+    F_ShiftMaster: Yup.number().nullable().required("Shift is required"),
+    MotherName: Yup.string(),
+    WifeName: Yup.string(),
+    FatherDateOfBirth: Yup.string(),
+    MotherDateOfBirth: Yup.string(),
+    WifeDateOfBirth: Yup.string(),
     InTime: Yup.string().required("In Time is required"),
     OutTime: Yup.string().required("Out Time is required"),
     MaxWorkingHoursFullDay: Yup.string().required("Max Working Hours Full Day is required"),
@@ -248,7 +256,6 @@ const AddEdit_EmployeeMasterContainer = () => {
   });
 
   const handleSubmit = (values: FormValues) => {
-    const obj = JSON.parse(localStorage.getItem("user") || "{}");
     let vformData = new FormData();
 
     // Tab 1 fields
@@ -261,8 +268,13 @@ const AddEdit_EmployeeMasterContainer = () => {
     vformData.append("Gender", values.Gender);
     vformData.append("MobileNo", values.MobileNo);
     vformData.append("Address", values.Address);
-    vformData.append("WorkingStatus", values.WorkingStatus);
-    vformData.append("F_ShiftMaster", values.SelectShift);
+    vformData.append("F_WorkingStatusMaster", values.F_WorkingStatusMaster ? String(values.F_WorkingStatusMaster) : "");
+    vformData.append("F_ShiftMaster", values.F_ShiftMaster ? String(values.F_ShiftMaster) : "");
+    vformData.append("MotherName", values.MotherName || "");
+    vformData.append("WifeName", values.WifeName || "");
+    vformData.append("FatherDateOfBirth", values.FatherDateOfBirth ? formatDateForAPI(values.FatherDateOfBirth) : "");
+    vformData.append("MotherDateOfBirth", values.MotherDateOfBirth ? formatDateForAPI(values.MotherDateOfBirth) : "");
+    vformData.append("WifeDateOfBirth", values.WifeDateOfBirth ? formatDateForAPI(values.WifeDateOfBirth) : "");
 
     // Tab 2 fields
     vformData.append("InTime", formatTimeForAPI(values.InTime));
@@ -276,13 +288,7 @@ const AddEdit_EmployeeMasterContainer = () => {
     vformData.append("WeeklyHoliday", values.WeeklyHoliday);
     vformData.append("MaxAllowedLeavesPerMonth", values.MaxAllowedLeavesPerMonth);
 
-    // Tab 3 fields - Family Details
-    vformData.append("FathersName", values.FathersName || "");
-    vformData.append("FathersDateOfBirth", values.FathersDateOfBirth ? formatDateForAPI(values.FathersDateOfBirth) : "");
-    vformData.append("MothersName", values.MothersName || "");
-    vformData.append("MothersDateOfBirth", values.MothersDateOfBirth ? formatDateForAPI(values.MothersDateOfBirth) : "");
-    vformData.append("WifesName", values.WifesName || "");
-    vformData.append("WifesDateOfBirth", values.WifesDateOfBirth ? formatDateForAPI(values.WifesDateOfBirth) : "");
+    // Family Details (moved to Tab 1, already appended above)
     
     // Children details - dynamic
     if (values.Children && values.Children.length > 0) {
@@ -297,10 +303,8 @@ const AddEdit_EmployeeMasterContainer = () => {
     vformData.append("Qualification", values.Qualification || "");
 
     // Documents
-    vformData.append("Document1Type", values.Document1Type || "");
-    vformData.append("Document1No", values.Document1No || "");
-    vformData.append("Document2Type", values.Document2Type || "");
-    vformData.append("Document2No", values.Document2No || "");
+    vformData.append("F_DocumentType1", values.F_DocumentType1 ? String(values.F_DocumentType1) : "");
+    vformData.append("F_DocumentType2", values.F_DocumentType2 ? String(values.F_DocumentType2) : "");
     
     // File uploads
     if (files.DocumentId1) {
@@ -316,7 +320,17 @@ const AddEdit_EmployeeMasterContainer = () => {
       vformData.append("EmployeeSignature", files.EmployeeSignature);
     }
     
-    vformData.append("UserId", obj === null || obj === undefined ? 0 : obj.uid);
+    let userId = 0;
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const obj = JSON.parse(userStr);
+        userId = (obj && (obj.uid || obj.Id)) ? (obj.uid || obj.Id) : 0;
+      }
+    } catch (error) {
+      console.error("Error parsing user from localStorage:", error);
+    }
+    vformData.append("UserId", String(userId));
 
     Fn_AddEditData(
       dispatch,
@@ -337,15 +351,20 @@ const AddEdit_EmployeeMasterContainer = () => {
   const initialValues: FormValues = {
     Name: state.formData?.Name || "",
     FatherName: state.formData?.FatherName || "",
+    MotherName: state.formData?.MotherName || state.formData?.MothersName || "",
+    WifeName: state.formData?.WifeName || state.formData?.WifesName || "",
     MachineEnrollmentNo: state.formData?.MachineEnrollmentNo || "",
     DateOfBirth: formatDateForInput(state.formData?.DateOfBirth || ""),
     Age: state.formData?.Age || calculateAge(formatDateForInput(state.formData?.DateOfBirth || "")),
+    FatherDateOfBirth: formatDateForInput(state.formData?.FatherDateOfBirth || state.formData?.FathersDateOfBirth || ""),
+    MotherDateOfBirth: formatDateForInput(state.formData?.MotherDateOfBirth || state.formData?.MothersDateOfBirth || ""),
+    WifeDateOfBirth: formatDateForInput(state.formData?.WifeDateOfBirth || state.formData?.WifesDateOfBirth || ""),
     DateOfJoining: formatDateForInput(state.formData?.DateOfJoining || ""),
     Gender: state.formData?.Gender || "",
     MobileNo: state.formData?.MobileNo || "",
     Address: state.formData?.Address || "",
-    WorkingStatus: state.formData?.WorkingStatus || "",
-    SelectShift: state.formData?.F_ShiftMaster || state.formData?.SelectShift || "",
+    F_WorkingStatusMaster: state.formData?.F_WorkingStatusMaster || state.formData?.WorkingStatusId || "",
+    F_ShiftMaster: state.formData?.F_ShiftMaster || state.formData?.SelectShift || "",
     InTime: isRailwayTime 
       ? (state.formData?.InTime?.includes("AM") || state.formData?.InTime?.includes("PM") ? convertTo24Hour(state.formData?.InTime || "") : state.formData?.InTime || "")
       : (state.formData?.InTime?.includes("AM") || state.formData?.InTime?.includes("PM") ? state.formData?.InTime : convertTo12Hour(state.formData?.InTime || "")),
@@ -360,13 +379,7 @@ const AddEdit_EmployeeMasterContainer = () => {
     GracePeriodMinsOverTime: state.formData?.GracePeriodMinsOverTime || "",
     WeeklyHoliday: state.formData?.WeeklyHoliday || "Sunday",
     MaxAllowedLeavesPerMonth: state.formData?.MaxAllowedLeavesPerMonth || "",
-    // Tab 3 - Family Details
-    FathersName: state.formData?.FathersName || "",
-    FathersDateOfBirth: formatDateForInput(state.formData?.FathersDateOfBirth || ""),
-    MothersName: state.formData?.MothersName || "",
-    MothersDateOfBirth: formatDateForInput(state.formData?.MothersDateOfBirth || ""),
-    WifesName: state.formData?.WifesName || "",
-    WifesDateOfBirth: formatDateForInput(state.formData?.WifesDateOfBirth || ""),
+    // Tab 3 - Family Details (moved to Tab 1)
     // Children - initialize with one empty child
     Children: state.formData?.Children && Array.isArray(state.formData.Children) && state.formData.Children.length > 0
       ? state.formData.Children.map((child: any) => ({
@@ -378,10 +391,8 @@ const AddEdit_EmployeeMasterContainer = () => {
     // Qualification
     Qualification: state.formData?.Qualification || "",
     // Documents
-    Document1Type: state.formData?.Document1Type || "",
-    Document1No: state.formData?.Document1No || "",
-    Document2Type: state.formData?.Document2Type || "",
-    Document2No: state.formData?.Document2No || "",
+    F_DocumentType1: state.formData?.F_DocumentType1 || state.formData?.Document1TypeId || "",
+    F_DocumentType2: state.formData?.F_DocumentType2 || state.formData?.Document2TypeId || "",
   };
 
   const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -458,7 +469,7 @@ const AddEdit_EmployeeMasterContainer = () => {
                             onClick={() => setActiveTab("3")}
                             style={{ cursor: "pointer" }}
                           >
-                            Family, Qualification & Documents
+                            Qualification & Documents
                           </NavLink>
                         </NavItem>
                       </Nav>
@@ -500,6 +511,42 @@ const AddEdit_EmployeeMasterContainer = () => {
                                   invalid={touched.FatherName && !!errors.FatherName}
                                 />
                                 <ErrorMessage name="FatherName" component="div" className="text-danger small" />
+                              </FormGroup>
+                            </Col>
+                            <Col md="6">
+                              <FormGroup>
+                                <Label>
+                                  Mother Name
+                                </Label>
+                                <Input
+                                  type="text"
+                                  name="MotherName"
+                                  placeholder="Enter Mother Name"
+                                  value={values.MotherName}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  onKeyDown={(e) => handleKeyDown(e, "MotherName")}
+                                  invalid={touched.MotherName && !!errors.MotherName}
+                                />
+                                <ErrorMessage name="MotherName" component="div" className="text-danger small" />
+                              </FormGroup>
+                            </Col>
+                            <Col md="6">
+                              <FormGroup>
+                                <Label>
+                                  Wife Name
+                                </Label>
+                                <Input
+                                  type="text"
+                                  name="WifeName"
+                                  placeholder="Enter Wife Name"
+                                  value={values.WifeName}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  onKeyDown={(e) => handleKeyDown(e, "WifeName")}
+                                  invalid={touched.WifeName && !!errors.WifeName}
+                                />
+                                <ErrorMessage name="WifeName" component="div" className="text-danger small" />
                               </FormGroup>
                             </Col>
                             <Col md="6">
@@ -551,6 +598,57 @@ const AddEdit_EmployeeMasterContainer = () => {
                                   readOnly
                                   style={{ backgroundColor: "#f8f9fa" }}
                                 />
+                              </FormGroup>
+                            </Col>
+                            <Col md="4">
+                              <FormGroup>
+                                <Label>
+                                  Father Date Of Birth
+                                </Label>
+                                <Input
+                                  type="date"
+                                  name="FatherDateOfBirth"
+                                  value={values.FatherDateOfBirth}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  onKeyDown={(e) => handleKeyDown(e, "FatherDateOfBirth")}
+                                  invalid={touched.FatherDateOfBirth && !!errors.FatherDateOfBirth}
+                                />
+                                <ErrorMessage name="FatherDateOfBirth" component="div" className="text-danger small" />
+                              </FormGroup>
+                            </Col>
+                            <Col md="4">
+                              <FormGroup>
+                                <Label>
+                                  Mother Date Of Birth
+                                </Label>
+                                <Input
+                                  type="date"
+                                  name="MotherDateOfBirth"
+                                  value={values.MotherDateOfBirth}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  onKeyDown={(e) => handleKeyDown(e, "MotherDateOfBirth")}
+                                  invalid={touched.MotherDateOfBirth && !!errors.MotherDateOfBirth}
+                                />
+                                <ErrorMessage name="MotherDateOfBirth" component="div" className="text-danger small" />
+                              </FormGroup>
+                            </Col>
+                            <Col md="4">
+                              <FormGroup>
+                                <Label>
+                                  Wife Date Of Birth
+                                </Label>
+                                <Input
+                                  type="date"
+                                  name="WifeDateOfBirth"
+                                  value={values.WifeDateOfBirth}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  onKeyDown={(e) => handleKeyDown(e, "WifeDateOfBirth")}
+                                  invalid={touched.WifeDateOfBirth && !!errors.WifeDateOfBirth}
+                                />
+                                <ErrorMessage name="WifeDateOfBirth" component="div" className="text-danger small" />
                               </FormGroup>
                             </Col>
                             <Col md="6">
@@ -637,37 +735,38 @@ const AddEdit_EmployeeMasterContainer = () => {
                                 </Label>
                                 <Input
                                   type="select"
-                                  name="WorkingStatus"
-                                  value={values.WorkingStatus}
+                                  name="F_WorkingStatusMaster"
+                                  value={values.F_WorkingStatusMaster}
                                   onChange={handleChange}
                                   onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "WorkingStatus")}
+                                  onKeyDown={(e) => handleKeyDown(e, "F_WorkingStatusMaster")}
                                   className="btn-square"
-                                  invalid={touched.WorkingStatus && !!errors.WorkingStatus}
+                                  invalid={touched.F_WorkingStatusMaster && !!errors.F_WorkingStatusMaster}
                                 >
-                                  <option value="">Select</option>
-                                  <option value="Active">Active</option>
-                                  <option value="Inactive">Inactive</option>
-                                  <option value="On Leave">On Leave</option>
-                                  <option value="Terminated">Terminated</option>
+                                  <option value="">Select Working Status</option>
+                                  {state.WorkingStatusArray.map((item: any) => (
+                                    <option key={item.Id} value={item.Id}>
+                                      {item.Name || `Status ${item.Id}`}
+                                    </option>
+                                  ))}
                                 </Input>
-                                <ErrorMessage name="WorkingStatus" component="div" className="text-danger small" />
+                                <ErrorMessage name="F_WorkingStatusMaster" component="div" className="text-danger small" />
                               </FormGroup>
                             </Col>
                             <Col md="6">
                               <FormGroup>
                                 <Label>
-                                  Select Shift <span className="text-danger">*</span>
+                                  Shift Master <span className="text-danger">*</span>
                                 </Label>
                                 <Input
                                   type="select"
-                                  name="SelectShift"
-                                  value={values.SelectShift}
+                                  name="F_ShiftMaster"
+                                  value={values.F_ShiftMaster}
                                   onChange={handleChange}
                                   onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "SelectShift")}
+                                  onKeyDown={(e) => handleKeyDown(e, "F_ShiftMaster")}
                                   className="btn-square"
-                                  invalid={touched.SelectShift && !!errors.SelectShift}
+                                  invalid={touched.F_ShiftMaster && !!errors.F_ShiftMaster}
                                 >
                                   <option value="">Select Shift</option>
                                   {state.ShiftArray.map((item: any) => (
@@ -676,7 +775,7 @@ const AddEdit_EmployeeMasterContainer = () => {
                                     </option>
                                   ))}
                                 </Input>
-                                <ErrorMessage name="SelectShift" component="div" className="text-danger small" />
+                                <ErrorMessage name="F_ShiftMaster" component="div" className="text-danger small" />
                               </FormGroup>
                             </Col>
                           </Row>
@@ -713,25 +812,36 @@ const AddEdit_EmployeeMasterContainer = () => {
                                     type="text"
                                     name="InTime"
                                     placeholder="HH:MM AM/PM"
-                                    value={values.InTime.includes("AM") || values.InTime.includes("PM") ? values.InTime : convertTo12Hour(values.InTime)}
+                                    value={
+                                      values.InTime.includes("AM") || values.InTime.includes("PM") 
+                                        ? values.InTime 
+                                        : (values.InTime && values.InTime.includes(":") && values.InTime.split(":")[1] && values.InTime.split(":")[1].length === 2)
+                                          ? convertTo12Hour(values.InTime)
+                                          : values.InTime
+                                    }
                                     onChange={(e) => {
+                                      // Store raw input while typing, convert on blur
+                                      setFieldValue("InTime", e.target.value);
+                                    }}
+                                    onBlur={(e) => {
                                       const time24 = convertTo24Hour(e.target.value);
-                                      setFieldValue("InTime", time24);
+                                      // Convert back to 12-hour format for display and pattern validation
+                                      const time12 = convertTo12Hour(time24);
+                                      setFieldValue("InTime", time12);
                                       if (values.OutTime) {
-                                        const hours = calculateWorkingHours(time24, values.OutTime);
+                                        const outTime24 = values.OutTime.includes("AM") || values.OutTime.includes("PM") 
+                                          ? convertTo24Hour(values.OutTime) 
+                                          : values.OutTime;
+                                        const hours = calculateWorkingHours(time24, outTime24);
                                         if (hours) {
                                           setFieldValue("MaxWorkingHoursFullDay", hours);
                                         }
                                       }
-                                    }}
-                                    onBlur={(e) => {
-                                      const time24 = convertTo24Hour(e.target.value);
-                                      setFieldValue("InTime", time24);
                                       handleBlur(e);
                                     }}
                                     onKeyDown={(e) => handleKeyDown(e, "InTime")}
                                     invalid={touched.InTime && !!errors.InTime}
-                                    pattern="^(0?[1-9]|1[0-2]):[0-5][0-9]\\s?(AM|PM)$"
+                                    pattern="^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$"
                                     title="Format: HH:MM AM/PM (e.g., 09:00 AM, 06:30 PM)"
                                   />
                                 )}
@@ -766,25 +876,36 @@ const AddEdit_EmployeeMasterContainer = () => {
                                     type="text"
                                     name="OutTime"
                                     placeholder="HH:MM AM/PM"
-                                    value={values.OutTime.includes("AM") || values.OutTime.includes("PM") ? values.OutTime : convertTo12Hour(values.OutTime)}
+                                    value={
+                                      values.OutTime.includes("AM") || values.OutTime.includes("PM") 
+                                        ? values.OutTime 
+                                        : (values.OutTime && values.OutTime.includes(":") && values.OutTime.split(":")[1] && values.OutTime.split(":")[1].length === 2)
+                                          ? convertTo12Hour(values.OutTime)
+                                          : values.OutTime
+                                    }
                                     onChange={(e) => {
+                                      // Store raw input while typing, convert on blur
+                                      setFieldValue("OutTime", e.target.value);
+                                    }}
+                                    onBlur={(e) => {
                                       const time24 = convertTo24Hour(e.target.value);
-                                      setFieldValue("OutTime", time24);
+                                      // Convert back to 12-hour format for display and pattern validation
+                                      const time12 = convertTo12Hour(time24);
+                                      setFieldValue("OutTime", time12);
                                       if (values.InTime) {
-                                        const hours = calculateWorkingHours(values.InTime, time24);
+                                        const inTime24 = values.InTime.includes("AM") || values.InTime.includes("PM") 
+                                          ? convertTo24Hour(values.InTime) 
+                                          : values.InTime;
+                                        const hours = calculateWorkingHours(inTime24, time24);
                                         if (hours) {
                                           setFieldValue("MaxWorkingHoursFullDay", hours);
                                         }
                                       }
-                                    }}
-                                    onBlur={(e) => {
-                                      const time24 = convertTo24Hour(e.target.value);
-                                      setFieldValue("OutTime", time24);
                                       handleBlur(e);
                                     }}
                                     onKeyDown={(e) => handleKeyDown(e, "OutTime")}
                                     invalid={touched.OutTime && !!errors.OutTime}
-                                    pattern="^(0?[1-9]|1[0-2]):[0-5][0-9]\\s?(AM|PM)$"
+                                    pattern="^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$"
                                     title="Format: HH:MM AM/PM (e.g., 09:00 AM, 06:30 PM)"
                                   />
                                 )}
@@ -950,96 +1071,9 @@ const AddEdit_EmployeeMasterContainer = () => {
                           </Row>
                         </TabPane>
 
-                        {/* Tab 3: Family, Qualification & Documents */}
+                        {/* Tab 3: Qualification & Documents */}
                         <TabPane tabId="3">
                           <Row className="mt-3">
-                            {/* Family Details Section */}
-                            <Col xs="12">
-                              <h6 className="mb-3" style={{ backgroundColor: "#f8f9fa", padding: "10px", borderRadius: "5px" }}>
-                                Family Details
-                              </h6>
-                            </Col>
-                            <Col md="4">
-                              <FormGroup>
-                                <Label>Father's Name</Label>
-                                <Input
-                                  type="text"
-                                  name="FathersName"
-                                  placeholder="Enter Father's Name"
-                                  value={values.FathersName}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "FathersName")}
-                                />
-                              </FormGroup>
-                            </Col>
-                            <Col md="4">
-                              <FormGroup>
-                                <Label>Father's Date Of Birth</Label>
-                                <Input
-                                  type="date"
-                                  name="FathersDateOfBirth"
-                                  value={values.FathersDateOfBirth}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "FathersDateOfBirth")}
-                                />
-                              </FormGroup>
-                            </Col>
-                            <Col md="4">
-                              <FormGroup>
-                                <Label>Mother's Name</Label>
-                                <Input
-                                  type="text"
-                                  name="MothersName"
-                                  placeholder="Enter Mother's Name"
-                                  value={values.MothersName}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "MothersName")}
-                                />
-                              </FormGroup>
-                            </Col>
-                            <Col md="4">
-                              <FormGroup>
-                                <Label>Mother's Date Of Birth</Label>
-                                <Input
-                                  type="date"
-                                  name="MothersDateOfBirth"
-                                  value={values.MothersDateOfBirth}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "MothersDateOfBirth")}
-                                />
-                              </FormGroup>
-                            </Col>
-                            <Col md="4">
-                              <FormGroup>
-                                <Label>Wife's Name</Label>
-                                <Input
-                                  type="text"
-                                  name="WifesName"
-                                  placeholder="Enter Wife's Name"
-                                  value={values.WifesName}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "WifesName")}
-                                />
-                              </FormGroup>
-                            </Col>
-                            <Col md="4">
-                              <FormGroup>
-                                <Label>Wife's Date Of Birth</Label>
-                                <Input
-                                  type="date"
-                                  name="WifesDateOfBirth"
-                                  value={values.WifesDateOfBirth}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "WifesDateOfBirth")}
-                                />
-                              </FormGroup>
-                            </Col>
                             {/* Child Details Section */}
                             <Col xs="12" className="mt-4">
                               <div style={{ backgroundColor: "#f8f9fa", padding: "10px", borderRadius: "5px", marginBottom: "15px" }}>
@@ -1168,43 +1202,30 @@ const AddEdit_EmployeeMasterContainer = () => {
                             </Col>
                             
                             {/* Document ID 1 */}
-                            <Col md="4">
+                            <Col md="6">
                               <FormGroup>
-                                <Label>Type of Document (ID 1)</Label>
+                                <Label>Document Type 1</Label>
                                 <Input
                                   type="select"
-                                  name="Document1Type"
-                                  value={values.Document1Type}
+                                  name="F_DocumentType1"
+                                  value={values.F_DocumentType1}
                                   onChange={handleChange}
                                   onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "Document1Type")}
+                                  onKeyDown={(e) => handleKeyDown(e, "F_DocumentType1")}
                                   className="btn-square"
+                                  invalid={touched.F_DocumentType1 && !!errors.F_DocumentType1}
                                 >
-                                  <option value="">Select</option>
-                                  <option value="Aadhar Card">Aadhar Card</option>
-                                  <option value="PAN Card">PAN Card</option>
-                                  <option value="Driving License">Driving License</option>
-                                  <option value="Passport">Passport</option>
-                                  <option value="Voter ID">Voter ID</option>
-                                  <option value="Other">Other</option>
+                                  <option value="">Select Document Type</option>
+                                  {state.DocumentTypeArray.map((item: any) => (
+                                    <option key={item.Id} value={item.Id}>
+                                      {item.Name || `Document Type ${item.Id}`}
+                                    </option>
+                                  ))}
                                 </Input>
+                                <ErrorMessage name="F_DocumentType1" component="div" className="text-danger small" />
                               </FormGroup>
                             </Col>
-                            <Col md="4">
-                              <FormGroup>
-                                <Label>Document No. (ID 1)</Label>
-                                <Input
-                                  type="text"
-                                  name="Document1No"
-                                  placeholder="Enter Document No."
-                                  value={values.Document1No}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "Document1No")}
-                                />
-                              </FormGroup>
-                            </Col>
-                            <Col md="4">
+                            <Col md="6">
                               <FormGroup>
                                 <Label>DocumentId 1</Label>
                                 <Input
@@ -1224,43 +1245,30 @@ const AddEdit_EmployeeMasterContainer = () => {
                             </Col>
 
                             {/* Document ID 2 */}
-                            <Col md="4">
+                            <Col md="6">
                               <FormGroup>
-                                <Label>Type of Document (ID 2)</Label>
+                                <Label>Document Type 2</Label>
                                 <Input
                                   type="select"
-                                  name="Document2Type"
-                                  value={values.Document2Type}
+                                  name="F_DocumentType2"
+                                  value={values.F_DocumentType2}
                                   onChange={handleChange}
                                   onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "Document2Type")}
+                                  onKeyDown={(e) => handleKeyDown(e, "F_DocumentType2")}
                                   className="btn-square"
+                                  invalid={touched.F_DocumentType2 && !!errors.F_DocumentType2}
                                 >
-                                  <option value="">Select</option>
-                                  <option value="Aadhar Card">Aadhar Card</option>
-                                  <option value="PAN Card">PAN Card</option>
-                                  <option value="Driving License">Driving License</option>
-                                  <option value="Passport">Passport</option>
-                                  <option value="Voter ID">Voter ID</option>
-                                  <option value="Other">Other</option>
+                                  <option value="">Select Document Type</option>
+                                  {state.DocumentTypeArray.map((item: any) => (
+                                    <option key={item.Id} value={item.Id}>
+                                      {item.Name || `Document Type ${item.Id}`}
+                                    </option>
+                                  ))}
                                 </Input>
+                                <ErrorMessage name="F_DocumentType2" component="div" className="text-danger small" />
                               </FormGroup>
                             </Col>
-                            <Col md="4">
-                              <FormGroup>
-                                <Label>Document No. (ID 2)</Label>
-                                <Input
-                                  type="text"
-                                  name="Document2No"
-                                  placeholder="Enter Document No."
-                                  value={values.Document2No}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "Document2No")}
-                                />
-                              </FormGroup>
-                            </Col>
-                            <Col md="4">
+                            <Col md="6">
                               <FormGroup>
                                 <Label>DocumentId 2</Label>
                                 <Input

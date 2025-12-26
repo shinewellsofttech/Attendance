@@ -44,9 +44,22 @@ const PageList_EmpShiftEditMasterContainer = () => {
 
   const loadData = async () => {
     setLoading(true);
-    await Fn_FillListData(dispatch, setGridData, "gridData", API_URL + "/Id/0");
+    try {
+      const data = await Fn_FillListData(dispatch, setGridData, "gridData", API_URL + "/Id/0");
+      console.log("EmpShiftEditMaster - Loaded data:", data);
+    } catch (error) {
+      console.error("EmpShiftEditMaster - Error loading data:", error);
+    }
     setLoading(false);
   };
+
+  // Debug: Log gridData when it changes
+  useEffect(() => {
+    console.log("EmpShiftEditMaster - gridData updated:", gridData);
+    if (gridData && gridData.length > 0) {
+      console.log("EmpShiftEditMaster - First item:", gridData[0]);
+    }
+  }, [gridData]);
 
   const handleEdit = (id: number) => {
     navigate("/addEdit_EmpShiftEditMaster", { state: { Id: id } });

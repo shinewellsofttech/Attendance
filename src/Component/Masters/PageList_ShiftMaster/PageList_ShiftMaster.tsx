@@ -45,9 +45,22 @@ const PageList_ShiftMasterContainer = () => {
 
   const loadData = async () => {
     setLoading(true);
-    await Fn_FillListData(dispatch, setGridData, "gridData", API_URL + "/Id/0");
+    try {
+      const data = await Fn_FillListData(dispatch, setGridData, "gridData", API_URL + "/Id/0");
+      console.log("ShiftMaster - Loaded data:", data);
+    } catch (error) {
+      console.error("ShiftMaster - Error loading data:", error);
+    }
     setLoading(false);
   };
+
+  // Debug: Log gridData when it changes
+  useEffect(() => {
+    console.log("ShiftMaster - gridData updated:", gridData);
+    if (gridData && gridData.length > 0) {
+      console.log("ShiftMaster - First item:", gridData[0]);
+    }
+  }, [gridData]);
 
   const handleEdit = (id: number) => {
     navigate("/addEdit_ShiftMaster", { state: { Id: id } });

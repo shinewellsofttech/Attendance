@@ -14,8 +14,8 @@ import { formatDateForInput, formatDateForAPI } from "../../../utils/dateFormatU
 
 interface FormValues {
   Name: string;
-  StartingFrom: string;
-  EndTo: string;
+  FromDate: string;
+  ToDate: string;
 }
 
 const API_URL_SAVE = "HolidayMaster/0/token";
@@ -42,7 +42,7 @@ const AddEdit_HolidayMasterContainer = () => {
       if (!form) return;
 
       // Define field order
-      const fieldOrder = ["Name", "StartingFrom", "EndTo"];
+      const fieldOrder = ["Name", "FromDate", "ToDate"];
       const currentIndex = fieldOrder.indexOf(currentFieldName);
 
       if (currentIndex < fieldOrder.length - 1) {
@@ -108,24 +108,33 @@ const AddEdit_HolidayMasterContainer = () => {
 
   const validationSchema = Yup.object({
     Name: Yup.string().required("Name is required"),
-    StartingFrom: Yup.string().required("Starting From date is required"),
-    EndTo: Yup.string()
-      .required("End To date is required")
-      .test("end-after-start", "End To date must be after or equal to Starting From date", function (value) {
-        const { StartingFrom } = this.parent;
-        if (!StartingFrom || !value) return true;
-        return new Date(value) >= new Date(StartingFrom);
+    FromDate: Yup.string().required("From Date is required"),
+    ToDate: Yup.string()
+      .required("To Date is required")
+      .test("end-after-start", "To Date must be after or equal to From Date", function (value) {
+        const { FromDate } = this.parent;
+        if (!FromDate || !value) return true;
+        return new Date(value) >= new Date(FromDate);
       }),
   });
 
   const handleSubmit = (values: FormValues) => {
-    const obj = JSON.parse(localStorage.getItem("user") || "{}");
+    let userId = 0;
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const obj = JSON.parse(userStr);
+        userId = (obj && (obj.uid || obj.Id)) ? (obj.uid || obj.Id) : 0;
+      }
+    } catch (error) {
+      console.error("Error parsing user from localStorage:", error);
+    }
+    
     let vformData = new FormData();
-
     vformData.append("Name", values.Name);
-    vformData.append("StartingFrom", formatDateForAPI(values.StartingFrom));
-    vformData.append("EndTo", formatDateForAPI(values.EndTo));
-    vformData.append("UserId", obj === null || obj === undefined ? 0 : obj.uid);
+    vformData.append("FromDate", formatDateForAPI(values.FromDate));
+    vformData.append("ToDate", formatDateForAPI(values.ToDate));
+    vformData.append("UserId", String(userId));
 
     Fn_AddEditData(
       dispatch,
@@ -145,8 +154,8 @@ const AddEdit_HolidayMasterContainer = () => {
 
   const initialValues: FormValues = {
     Name: state.formData?.Name || "",
-    StartingFrom: formatDateForInput(state.formData?.StartingFrom || ""),
-    EndTo: formatDateForInput(state.formData?.EndTo || ""),
+    FromDate: formatDateForInput(state.formData?.FromDate || state.formData?.StartingFrom || ""),
+    ToDate: formatDateForInput(state.formData?.ToDate || state.formData?.EndTo || ""),
   };
 
   return (
@@ -208,35 +217,35 @@ const AddEdit_HolidayMasterContainer = () => {
                         <Col md="6">
                           <FormGroup>
                             <Label>
-                              Starting From <span className="text-danger">*</span>
+                              From Date <span className="text-danger">*</span>
                             </Label>
                             <Input
                               type="date"
-                              name="StartingFrom"
-                              value={values.StartingFrom}
+                              name="FromDate"
+                              value={values.FromDate}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "StartingFrom")}
-                              invalid={touched.StartingFrom && !!errors.StartingFrom}
+                              onKeyDown={(e) => handleKeyDown(e, "FromDate")}
+                              invalid={touched.FromDate && !!errors.FromDate}
                             />
-                            <ErrorMessage name="StartingFrom" component="div" className="text-danger small" />
+                            <ErrorMessage name="FromDate" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                         <Col md="6">
                           <FormGroup>
                             <Label>
-                              End To <span className="text-danger">*</span>
+                              To Date <span className="text-danger">*</span>
                             </Label>
                             <Input
                               type="date"
-                              name="EndTo"
-                              value={values.EndTo}
+                              name="ToDate"
+                              value={values.ToDate}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "EndTo")}
-                              invalid={touched.EndTo && !!errors.EndTo}
+                              onKeyDown={(e) => handleKeyDown(e, "ToDate")}
+                              invalid={touched.ToDate && !!errors.ToDate}
                             />
-                            <ErrorMessage name="EndTo" component="div" className="text-danger small" />
+                            <ErrorMessage name="ToDate" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                       </Row>

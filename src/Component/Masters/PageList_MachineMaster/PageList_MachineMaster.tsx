@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Card, CardBody, Col, Container, FormGroup, Input, Label, Row, Table } from "reactstrap";
+import { Card, CardBody, Col, Container, Input, Label, Row, Table } from "reactstrap";
 import { Btn } from "../../../AbstractElements";
 import Breadcrumbs from "../../../CommonElements/Breadcrumbs/Breadcrumbs";
 import CardHeaderCommon from "../../../CommonElements/CardHeaderCommon/CardHeaderCommon";
 import { Fn_FillListData, Fn_DeleteData } from "../../../store/Functions";
 import { API_WEB_URLS } from "../../../constants/constAPI";
 
-const API_URL = `${API_WEB_URLS.MASTER}/0/token/CityMaster`;
+const API_URL = `${API_WEB_URLS.MASTER}/0/token/MachineMaster`;
 
-const PageList_CityMasterContainer = () => {
+const PageList_MachineMasterContainer = () => {
   const [gridData, setGridData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterText, setFilterText] = useState("");
@@ -46,27 +46,27 @@ const PageList_CityMasterContainer = () => {
     setLoading(true);
     try {
       const data = await Fn_FillListData(dispatch, setGridData, "gridData", API_URL + "/Id/0");
-      console.log("CityMaster - Loaded data:", data);
+      console.log("MachineMaster - Loaded data:", data);
     } catch (error) {
-      console.error("CityMaster - Error loading data:", error);
+      console.error("MachineMaster - Error loading data:", error);
     }
     setLoading(false);
   };
 
   // Debug: Log gridData when it changes
   useEffect(() => {
-    console.log("CityMaster - gridData updated:", gridData);
+    console.log("MachineMaster - gridData updated:", gridData);
     if (gridData && gridData.length > 0) {
-      console.log("CityMaster - First item:", gridData[0]);
+      console.log("MachineMaster - First item:", gridData[0]);
     }
   }, [gridData]);
 
   const handleEdit = (id: number) => {
-    navigate("/addEdit_CityMaster", { state: { Id: id } });
+    navigate("/addEdit_MachineMaster", { state: { Id: id } });
   };
 
   const handleDelete = async (id: number) => {
-    const confirmed = window.confirm("Are you sure you want to delete this city?");
+    const confirmed = window.confirm("Are you sure you want to delete this machine?");
     if (confirmed) {
       try {
         const result = await Fn_DeleteData(dispatch, setGridData, id, API_URL, API_URL + "/Id/0");
@@ -80,26 +80,27 @@ const PageList_CityMasterContainer = () => {
   };
 
   const handleAdd = () => {
-    navigate("/addEdit_CityMaster", { state: { Id: 0 } });
+    navigate("/addEdit_MachineMaster", { state: { Id: 0 } });
   };
 
   const filteredData = (Array.isArray(gridData) ? gridData : []).filter((item: any) => {
     const searchText = filterText.toLowerCase();
     return (
       (item.Name && item.Name.toLowerCase().includes(searchText)) ||
-      (item.StateName && item.StateName.toLowerCase().includes(searchText))
+      (item.MachineTypeName && item.MachineTypeName.toLowerCase().includes(searchText)) ||
+      (item.MachineType?.Name && item.MachineType.Name.toLowerCase().includes(searchText))
     );
   });
 
   return (
     <>
-      <Breadcrumbs mainTitle="City Master List" parent="Masters" />
+      <Breadcrumbs mainTitle="Machine Master List" parent="Masters" />
       <Container fluid>
         <Row>
           <Col xs="12">
             <Card>
               <CardHeaderCommon
-                title="City Master List"
+                title="Machine Master List"
                 tagClass="card-title mb-0"
               />
               <CardBody>
@@ -109,7 +110,7 @@ const PageList_CityMasterContainer = () => {
                       <Label className="me-2">Search:</Label>
                       <Input
                         type="search"
-                        placeholder="Search by Name or State..."
+                        placeholder="Search by name or machine type..."
                         value={filterText}
                         onChange={(e) => setFilterText(e.target.value)}
                       />
@@ -120,7 +121,7 @@ const PageList_CityMasterContainer = () => {
                       color="primary"
                       onClick={handleAdd}
                     >
-                      <i className="fa fa-plus me-2"></i>Add New City
+                      <i className="fa fa-plus me-2"></i>Add New Machine
                     </Btn>
                   </Col>
                 </Row>
@@ -137,14 +138,14 @@ const PageList_CityMasterContainer = () => {
                         <tr>
                           <th>#</th>
                           <th>Name</th>
-                          <th>State</th>
+                          <th>Machine Type</th>
                           <th style={{ width: "150px", textAlign: "center" }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredData.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="text-center">
+                            <td colSpan={4} className="text-center p-4">
                               No data found
                             </td>
                           </tr>
@@ -153,8 +154,8 @@ const PageList_CityMasterContainer = () => {
                             <tr key={item.Id || index}>
                               <td>{index + 1}</td>
                               <td>{item.Name || "-"}</td>
-                              <td>{item.StateName || item.State?.Name || "-"}</td>
-                              <td style={{ textAlign: "center" }}>
+                              <td>{item.MachineTypeName || item.MachineType?.Name || "-"}</td>
+                              <td style={{ width: "150px", whiteSpace: "nowrap" }}>
                                 <Btn
                                   color="primary"
                                   size="sm"
@@ -187,5 +188,5 @@ const PageList_CityMasterContainer = () => {
   );
 };
 
-export default PageList_CityMasterContainer;
+export default PageList_MachineMasterContainer;
 

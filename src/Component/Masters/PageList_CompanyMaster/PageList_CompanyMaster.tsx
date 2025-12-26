@@ -44,9 +44,23 @@ const PageList_CompanyMasterContainer = () => {
 
   const loadData = async () => {
     setLoading(true);
-    await Fn_FillListData(dispatch, setGridData, "gridData", API_URL + "/Id/0");
+    try {
+      const data = await Fn_FillListData(dispatch, setGridData, "gridData", API_URL + "/Id/0");
+      console.log("Loaded data from API:", data);
+    } catch (error) {
+      console.error("Error loading data:", error);
+    }
     setLoading(false);
   };
+
+  // Debug: Log gridData when it changes
+  useEffect(() => {
+    console.log("gridData updated:", gridData);
+    console.log("gridData length:", gridData?.length);
+    if (gridData && gridData.length > 0) {
+      console.log("First item:", gridData[0]);
+    }
+  }, [gridData]);
 
   const handleEdit = (id: number) => {
     navigate("/addEdit_CompanyMaster", { state: { Id: id } });
@@ -73,6 +87,8 @@ const PageList_CompanyMasterContainer = () => {
   const filteredData = (Array.isArray(gridData) ? gridData : []).filter((item) => {
     const searchText = filterText.toLowerCase();
     return (
+      (item.Name && item.Name.toLowerCase().includes(searchText)) ||
+      (item.Username && item.Username.toLowerCase().includes(searchText)) ||
       (item.CompanyName && item.CompanyName.toLowerCase().includes(searchText)) ||
       (item.UserName && item.UserName.toLowerCase().includes(searchText))
     );
@@ -123,8 +139,8 @@ const PageList_CompanyMasterContainer = () => {
                       <thead>
                         <tr>
                           <th>#</th>
-                          <th>Company Name</th>
-                          <th>UserName</th>
+                          <th>Name</th>
+                          <th>Username</th>
                           <th style={{ width: "150px", textAlign: "center" }}>Actions</th>
                         </tr>
                       </thead>
@@ -139,8 +155,8 @@ const PageList_CompanyMasterContainer = () => {
                           filteredData.map((item: any, index: number) => (
                             <tr key={item.Id || index}>
                               <td>{index + 1}</td>
-                              <td>{item.CompanyName || "-"}</td>
-                              <td>{item.UserName || "-"}</td>
+                              <td>{item.Name || item.CompanyName || "-"}</td>
+                              <td>{item.Username || item.UserName || "-"}</td>
                               <td style={{ width: "150px", whiteSpace: "nowrap" }}>
                                 <Btn
                                   color="primary"

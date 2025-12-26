@@ -11,13 +11,14 @@ import CardHeaderCommon from "../../../CommonElements/CardHeaderCommon/CardHeade
 import { Fn_FillListData, Fn_DisplayData, Fn_AddEditData } from "../../../store/Functions";
 import { API_WEB_URLS } from "../../../constants/constAPI";
 
-interface ShiftAssignment {
-  ShiftId: string;
+interface EmployeeShiftRow {
+  F_EmployeeMaster: string;
+  F_ShiftMaster1: string;
+  F_ShiftMaster2: string;
 }
 
 interface FormValues {
-  EmployeeId: string;
-  ShiftAssignments: ShiftAssignment[];
+  Rows: EmployeeShiftRow[];
 }
 
 const API_URL_SAVE = "EmpShiftEditMaster/0/token";
@@ -76,28 +77,39 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
   }, [dispatch, location.state, navigate]);
 
   const validationSchema = Yup.object({
-    EmployeeId: Yup.string().required("Employee is required"),
-    ShiftAssignments: Yup.array()
+    Rows: Yup.array()
       .of(
         Yup.object({
-          ShiftId: Yup.string().required("Shift is required"),
+          F_EmployeeMaster: Yup.string().required("Employee is required"),
+          F_ShiftMaster1: Yup.string().required("Shift Master 1 is required"),
+          F_ShiftMaster2: Yup.string().required("Shift Master 2 is required"),
         })
       )
-      .min(1, "At least one shift is required"),
+      .min(1, "At least one row is required"),
   });
 
   const handleSubmit = (values: FormValues) => {
-    const obj = JSON.parse(localStorage.getItem("user") || "{}");
-    let vformData = new FormData();
-
-    vformData.append("F_EmployeeMaster", values.EmployeeId);
+    let userId = 0;
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const obj = JSON.parse(userStr);
+        userId = (obj && (obj.uid || obj.Id)) ? (obj.uid || obj.Id) : 0;
+      }
+    } catch (error) {
+      console.error("Error parsing user from localStorage:", error);
+    }
     
-    // Append shift assignments
-    values.ShiftAssignments.forEach((shift, index) => {
-      vformData.append(`ShiftAssignments[${index}].F_ShiftMaster`, shift.ShiftId);
+    let vformData = new FormData();
+    
+    // Loop through all rows and append data
+    values.Rows.forEach((row, index) => {
+      vformData.append(`Rows[${index}].F_EmployeeMaster`, row.F_EmployeeMaster || "");
+      vformData.append(`Rows[${index}].F_ShiftMaster1`, row.F_ShiftMaster1 || "");
+      vformData.append(`Rows[${index}].F_ShiftMaster2`, row.F_ShiftMaster2 || "");
     });
     
-    vformData.append("UserId", obj === null || obj === undefined ? 0 : obj.uid);
+    vformData.append("UserId", String(userId));
 
     Fn_AddEditData(
       dispatch,
@@ -113,23 +125,18 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
 
   const isEditMode = state.id > 0;
 
-  // Format shift display name with time
-  const getShiftDisplayName = (shiftId: string) => {
-    if (!shiftId) return "";
-    const shift = state.ShiftArray.find((s: any) => s.Id === shiftId || s.Id === Number(shiftId));
-    if (shift) {
-      return `${shift.Name} (${shift.InTime || ""} - ${shift.OutTime || ""})`;
-    }
-    return "";
-  };
-
   const initialValues: FormValues = {
-    EmployeeId: state.formData?.F_EmployeeMaster || state.formData?.EmployeeId || "",
-    ShiftAssignments: state.formData?.ShiftAssignments && Array.isArray(state.formData.ShiftAssignments) && state.formData.ShiftAssignments.length > 0
-      ? state.formData.ShiftAssignments.map((sa: any) => ({
-          ShiftId: sa.F_ShiftMaster || sa.ShiftId || "",
+    Rows: state.formData?.Rows && Array.isArray(state.formData.Rows) && state.formData.Rows.length > 0
+      ? state.formData.Rows.map((row: any) => ({
+          F_EmployeeMaster: row.F_EmployeeMaster || "",
+          F_ShiftMaster1: row.F_ShiftMaster1 || "",
+          F_ShiftMaster2: row.F_ShiftMaster2 || "",
         }))
-      : [{ ShiftId: "" }],
+      : [{
+          F_EmployeeMaster: "",
+          F_ShiftMaster1: "",
+          F_ShiftMaster2: "",
+        }],
   };
 
   return (
@@ -145,10 +152,10 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
         body.dark-only select.btn-square option {
           color: #ffffff !important;
         }
-        .shift-row {
+        .emp-shift-row {
           display: flex;
           align-items: flex-end;
-          gap: 20px;
+          gap: 15px;
           margin-bottom: 20px;
           padding: 20px;
           border: 1px solid #e0e0e0;
@@ -156,11 +163,12 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
           background-color: #ffffff;
           flex-wrap: wrap;
         }
-        .shift-actions {
+        .row-actions {
           display: flex;
-          flex-direction: column;
+          flex-direction: row;
           gap: 5px;
           margin-left: auto;
+          align-items: center;
         }
       `}</style>
       <Breadcrumbs mainTitle="Employee Shift Edit Master" parent="Masters" />
@@ -181,53 +189,61 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
                       tagClass="card-title mb-0"
                     />
                     <CardBody>
-                      {/* Dynamic Shift Assignments */}
+                      {/* Dynamic Rows with Employee and Two Shifts */}
                       <Row className="mt-4">
                         <Col xs="12">
-                          <div className="shift-row">
-                            {/* Employee Column */}
-                            <div style={{ minWidth: "200px", flex: "0 0 auto" }}>
-                              <FormGroup>
-                                <Label>
-                                  <strong>Employee</strong>
-                                </Label>
-                                <Input
-                                  type="select"
-                                  name="EmployeeId"
-                                  value={values.EmployeeId}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  className="btn-square"
-                                  invalid={touched.EmployeeId && !!errors.EmployeeId}
-                                >
-                                  <option value="">Employee...</option>
-                                  {state.EmployeeArray.map((item: any) => (
-                                    <option key={item.Id} value={item.Id}>
-                                      {item.Name || item.MachineEnrollmentNo || `Employee ${item.Id}`}
-                                    </option>
-                                  ))}
-                                </Input>
-                                <ErrorMessage name="EmployeeId" component="div" className="text-danger small" />
-                              </FormGroup>
-                            </div>
-
-                            {/* Shift Dropdowns */}
-                            {values.ShiftAssignments.map((shift, index) => (
-                              <div key={index} style={{ minWidth: "200px", flex: "0 0 auto" }}>
+                          {values.Rows.map((row, rowIndex) => (
+                            <div key={rowIndex} className="emp-shift-row">
+                              {/* Employee Field */}
+                              <div style={{ minWidth: "200px", flex: "1 1 auto" }}>
                                 <FormGroup>
                                   <Label>
-                                    <strong>Shift {index + 1}</strong>
+                                    Employee <span className="text-danger">*</span>
                                   </Label>
                                   <Input
                                     type="select"
-                                    value={shift.ShiftId}
+                                    value={row.F_EmployeeMaster}
                                     onChange={(e) => {
-                                      const newAssignments = [...values.ShiftAssignments];
-                                      newAssignments[index].ShiftId = e.target.value;
-                                      setFieldValue("ShiftAssignments", newAssignments);
+                                      const newRows = [...values.Rows];
+                                      newRows[rowIndex].F_EmployeeMaster = e.target.value;
+                                      setFieldValue("Rows", newRows);
                                     }}
                                     onBlur={handleBlur}
                                     className="btn-square"
+                                    invalid={touched.Rows && errors.Rows && Array.isArray(errors.Rows) && errors.Rows[rowIndex] && !!(errors.Rows[rowIndex] as any)?.F_EmployeeMaster}
+                                  >
+                                    <option value="">Select Employee</option>
+                                    {state.EmployeeArray.map((item: any) => (
+                                      <option key={item.Id} value={item.Id}>
+                                        {item.Name || item.MachineEnrollmentNo || `Employee ${item.Id}`}
+                                      </option>
+                                    ))}
+                                  </Input>
+                                  {touched.Rows && errors.Rows && Array.isArray(errors.Rows) && errors.Rows[rowIndex] && (errors.Rows[rowIndex] as any)?.F_EmployeeMaster && (
+                                    <div className="text-danger small">
+                                      {(errors.Rows[rowIndex] as any).F_EmployeeMaster}
+                                    </div>
+                                  )}
+                                </FormGroup>
+                              </div>
+
+                              {/* Shift Master 1 Field */}
+                              <div style={{ minWidth: "200px", flex: "1 1 auto" }}>
+                                <FormGroup>
+                                  <Label>
+                                    Shift Master 1 <span className="text-danger">*</span>
+                                  </Label>
+                                  <Input
+                                    type="select"
+                                    value={row.F_ShiftMaster1}
+                                    onChange={(e) => {
+                                      const newRows = [...values.Rows];
+                                      newRows[rowIndex].F_ShiftMaster1 = e.target.value;
+                                      setFieldValue("Rows", newRows);
+                                    }}
+                                    onBlur={handleBlur}
+                                    className="btn-square"
+                                    invalid={touched.Rows && errors.Rows && Array.isArray(errors.Rows) && errors.Rows[rowIndex] && !!(errors.Rows[rowIndex] as any)?.F_ShiftMaster1}
                                   >
                                     <option value="">Select Shift</option>
                                     {state.ShiftArray.map((item: any) => (
@@ -236,47 +252,86 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
                                       </option>
                                     ))}
                                   </Input>
-                                  {touched.ShiftAssignments && errors.ShiftAssignments && Array.isArray(errors.ShiftAssignments) && errors.ShiftAssignments[index] && (
+                                  {touched.Rows && errors.Rows && Array.isArray(errors.Rows) && errors.Rows[rowIndex] && (errors.Rows[rowIndex] as any)?.F_ShiftMaster1 && (
                                     <div className="text-danger small">
-                                      {(errors.ShiftAssignments[index] as any)?.ShiftId}
+                                      {(errors.Rows[rowIndex] as any).F_ShiftMaster1}
                                     </div>
                                   )}
                                 </FormGroup>
                               </div>
-                            ))}
 
-                            {/* Action Buttons */}
-                            <div className="shift-actions">
-                              <Btn
-                                color="success"
-                                size="sm"
-                                type="button"
-                                onClick={() => {
-                                  const newAssignments = [...values.ShiftAssignments, { ShiftId: "" }];
-                                  setFieldValue("ShiftAssignments", newAssignments);
-                                }}
-                                style={{ minWidth: "40px", height: "40px", marginBottom: "5px" }}
-                                title="Add Shift"
-                              >
-                                <i className="fa fa-plus"></i>
-                              </Btn>
-                              {values.ShiftAssignments.length > 1 && (
-                                <Btn
-                                  color="danger"
-                                  size="sm"
-                                  type="button"
-                                  onClick={() => {
-                                    const newAssignments = values.ShiftAssignments.slice(0, -1);
-                                    setFieldValue("ShiftAssignments", newAssignments);
-                                  }}
-                                  style={{ minWidth: "40px", height: "40px" }}
-                                  title="Remove Last Shift"
-                                >
-                                  <i className="fa fa-times"></i>
-                                </Btn>
-                              )}
+                              {/* Shift Master 2 Field */}
+                              <div style={{ minWidth: "200px", flex: "1 1 auto" }}>
+                                <FormGroup>
+                                  <Label>
+                                    Shift Master 2 <span className="text-danger">*</span>
+                                  </Label>
+                                  <Input
+                                    type="select"
+                                    value={row.F_ShiftMaster2}
+                                    onChange={(e) => {
+                                      const newRows = [...values.Rows];
+                                      newRows[rowIndex].F_ShiftMaster2 = e.target.value;
+                                      setFieldValue("Rows", newRows);
+                                    }}
+                                    onBlur={handleBlur}
+                                    className="btn-square"
+                                    invalid={touched.Rows && errors.Rows && Array.isArray(errors.Rows) && errors.Rows[rowIndex] && !!(errors.Rows[rowIndex] as any)?.F_ShiftMaster2}
+                                  >
+                                    <option value="">Select Shift</option>
+                                    {state.ShiftArray.map((item: any) => (
+                                      <option key={item.Id} value={item.Id}>
+                                        {item.Name} ({item.InTime || ""} - {item.OutTime || ""})
+                                      </option>
+                                    ))}
+                                  </Input>
+                                  {touched.Rows && errors.Rows && Array.isArray(errors.Rows) && errors.Rows[rowIndex] && (errors.Rows[rowIndex] as any)?.F_ShiftMaster2 && (
+                                    <div className="text-danger small">
+                                      {(errors.Rows[rowIndex] as any).F_ShiftMaster2}
+                                    </div>
+                                  )}
+                                </FormGroup>
+                              </div>
+
+                              {/* Action Buttons for each row */}
+                              <div className="row-actions">
+                                {rowIndex === values.Rows.length - 1 && (
+                                  <Btn
+                                    color="success"
+                                    size="sm"
+                                    type="button"
+                                    onClick={() => {
+                                      const newRows = [...values.Rows, {
+                                        F_EmployeeMaster: "",
+                                        F_ShiftMaster1: "",
+                                        F_ShiftMaster2: "",
+                                      }];
+                                      setFieldValue("Rows", newRows);
+                                    }}
+                                    style={{ minWidth: "40px", height: "40px" }}
+                                    title="Add Row"
+                                  >
+                                    <i className="fa fa-plus"></i>
+                                  </Btn>
+                                )}
+                                {values.Rows.length > 1 && (
+                                  <Btn
+                                    color="danger"
+                                    size="sm"
+                                    type="button"
+                                    onClick={() => {
+                                      const newRows = values.Rows.filter((_, index) => index !== rowIndex);
+                                      setFieldValue("Rows", newRows);
+                                    }}
+                                    style={{ minWidth: "40px", height: "40px" }}
+                                    title="Remove Row"
+                                  >
+                                    <i className="fa fa-times"></i>
+                                  </Btn>
+                                )}
+                              </div>
                             </div>
-                          </div>
+                          ))}
                         </Col>
                       </Row>
                     </CardBody>

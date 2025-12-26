@@ -8,7 +8,24 @@
 export const convertTo12Hour = (time24: string): string => {
   if (!time24) return "";
   try {
-    const [hours, minutes] = time24.split(":").map(Number);
+    // Handle incomplete time strings (e.g., "12:", "12:3")
+    if (!time24.includes(":")) return time24;
+    
+    const parts = time24.split(":");
+    const hoursStr = parts[0] || "0";
+    const minutesStr = parts[1] || "00";
+    
+    // Check if hours or minutes are invalid
+    const hours = parseInt(hoursStr, 10);
+    const minutes = parseInt(minutesStr, 10);
+    
+    if (isNaN(hours) || hours < 0 || hours > 23) return time24;
+    if (isNaN(minutes) || minutes < 0 || minutes > 59) {
+      // If minutes are incomplete, return as is (don't format)
+      if (minutesStr.length < 2) return time24;
+      return time24;
+    }
+    
     const period = hours >= 12 ? "PM" : "AM";
     const hours12 = hours % 12 || 12;
     return `${String(hours12).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${period}`;

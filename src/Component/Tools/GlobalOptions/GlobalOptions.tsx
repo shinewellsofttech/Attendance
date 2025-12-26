@@ -372,27 +372,36 @@ const GlobalOptionsContainer = () => {
                                 type="text"
                                 name="InTime"
                                 placeholder="HH:MM AM/PM"
-                                value={values.InTime.includes("AM") || values.InTime.includes("PM") 
-                                  ? values.InTime 
-                                  : convertTo12Hour(values.InTime)}
+                                value={
+                                  values.InTime.includes("AM") || values.InTime.includes("PM") 
+                                    ? values.InTime 
+                                    : (values.InTime && values.InTime.includes(":") && values.InTime.split(":")[1] && values.InTime.split(":")[1].length === 2)
+                                      ? convertTo12Hour(values.InTime)
+                                      : values.InTime
+                                }
                                 onChange={(e) => {
+                                  // Store raw input while typing, convert on blur
+                                  setFieldValue("InTime", e.target.value);
+                                }}
+                                onBlur={(e) => {
                                   const time24 = convertTo24Hour(e.target.value);
-                                  setFieldValue("InTime", time24);
+                                  // Convert back to 12-hour format for display and pattern validation
+                                  const time12 = convertTo12Hour(time24);
+                                  setFieldValue("InTime", time12);
                                   if (values.OutTime) {
-                                    const hours = calculateWorkingHours(time24, values.OutTime);
+                                    const outTime24 = values.OutTime.includes("AM") || values.OutTime.includes("PM") 
+                                      ? convertTo24Hour(values.OutTime) 
+                                      : values.OutTime;
+                                    const hours = calculateWorkingHours(time24, outTime24);
                                     if (hours) {
                                       setFieldValue("MaxWorkingHoursFullDay", hours);
                                     }
                                   }
-                                }}
-                                onBlur={(e) => {
-                                  const time24 = convertTo24Hour(e.target.value);
-                                  setFieldValue("InTime", time24);
                                   handleBlur(e);
                                 }}
                                 onKeyDown={(e) => handleKeyDown(e, "InTime")}
                                 invalid={touched.InTime && !!errors.InTime}
-                                pattern="^(0?[1-9]|1[0-2]):[0-5][0-9]\\s?(AM|PM)$"
+                                pattern="^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$"
                                 title="Format: HH:MM AM/PM (e.g., 09:00 AM, 06:30 PM)"
                               />
                             )}
@@ -427,27 +436,36 @@ const GlobalOptionsContainer = () => {
                                 type="text"
                                 name="OutTime"
                                 placeholder="HH:MM AM/PM"
-                                value={values.OutTime.includes("AM") || values.OutTime.includes("PM") 
-                                  ? values.OutTime 
-                                  : convertTo12Hour(values.OutTime)}
+                                value={
+                                  values.OutTime.includes("AM") || values.OutTime.includes("PM") 
+                                    ? values.OutTime 
+                                    : (values.OutTime && values.OutTime.includes(":") && values.OutTime.split(":")[1] && values.OutTime.split(":")[1].length === 2)
+                                      ? convertTo12Hour(values.OutTime)
+                                      : values.OutTime
+                                }
                                 onChange={(e) => {
+                                  // Store raw input while typing, convert on blur
+                                  setFieldValue("OutTime", e.target.value);
+                                }}
+                                onBlur={(e) => {
                                   const time24 = convertTo24Hour(e.target.value);
-                                  setFieldValue("OutTime", time24);
+                                  // Convert back to 12-hour format for display and pattern validation
+                                  const time12 = convertTo12Hour(time24);
+                                  setFieldValue("OutTime", time12);
                                   if (values.InTime) {
-                                    const hours = calculateWorkingHours(values.InTime, time24);
+                                    const inTime24 = values.InTime.includes("AM") || values.InTime.includes("PM") 
+                                      ? convertTo24Hour(values.InTime) 
+                                      : values.InTime;
+                                    const hours = calculateWorkingHours(inTime24, time24);
                                     if (hours) {
                                       setFieldValue("MaxWorkingHoursFullDay", hours);
                                     }
                                   }
-                                }}
-                                onBlur={(e) => {
-                                  const time24 = convertTo24Hour(e.target.value);
-                                  setFieldValue("OutTime", time24);
                                   handleBlur(e);
                                 }}
                                 onKeyDown={(e) => handleKeyDown(e, "OutTime")}
                                 invalid={touched.OutTime && !!errors.OutTime}
-                                pattern="^(0?[1-9]|1[0-2]):[0-5][0-9]\\s?(AM|PM)$"
+                                pattern="^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$"
                                 title="Format: HH:MM AM/PM (e.g., 09:00 AM, 06:30 PM)"
                               />
                             )}

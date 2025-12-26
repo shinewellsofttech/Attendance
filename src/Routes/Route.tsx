@@ -19,6 +19,8 @@ import AddEdit_CityMaster from "../Pages/Masters/AddEdit_CityMaster";
 import PageList_CityMaster from "../Pages/Masters/PageList_CityMaster";
 import GlobalOptions from "../Pages/Tools/GlobalOptions";
 import AdminRoute from "./AdminRoute";
+import AddEdit_MachineMaster from "../Pages/Masters/AddEdit_MachineMaster";
+import PageList_MachineMaster from "../Pages/Masters/PageList_MachineMaster";
 
 export const routes = [
   // Sample Page
@@ -40,6 +42,8 @@ export const routes = [
   { path: `${process.env.PUBLIC_URL}/stateMaster`, Component: <AdminRoute><PageList_StateMaster /></AdminRoute> },
   { path: `${process.env.PUBLIC_URL}/addEdit_CityMaster`, Component: <AdminRoute><AddEdit_CityMaster /></AdminRoute> },
   { path: `${process.env.PUBLIC_URL}/cityMaster`, Component: <AdminRoute><PageList_CityMaster /></AdminRoute> },
+  { path: `${process.env.PUBLIC_URL}/addEdit_MachineMaster`, Component: <AdminRoute><AddEdit_MachineMaster /></AdminRoute> },
+  { path: `${process.env.PUBLIC_URL}/machineMaster`, Component: <AdminRoute><PageList_MachineMaster /></AdminRoute> },
   { path: `${process.env.PUBLIC_URL}/globalOptions`, Component: <AdminRoute><GlobalOptions /></AdminRoute> },
   { path: `${process.env.PUBLIC_URL}/taskManagement`, Component: <TaskManagement /> },
 ];

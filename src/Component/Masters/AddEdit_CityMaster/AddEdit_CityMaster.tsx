@@ -120,12 +120,21 @@ const AddEdit_CityMasterContainer = () => {
   });
 
   const handleSubmit = (values: FormValues) => {
-    const obj = JSON.parse(localStorage.getItem("user") || "{}");
+    let userId = 0;
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const obj = JSON.parse(userStr);
+        userId = (obj && (obj.uid || obj.Id)) ? (obj.uid || obj.Id) : 0;
+      }
+    } catch (error) {
+      console.error("Error parsing user from localStorage:", error);
+    }
+    
     let vformData = new FormData();
-
     vformData.append("Name", values.Name);
     vformData.append("F_StateMaster", values.F_StateMaster);
-    vformData.append("UserId", obj === null || obj === undefined ? 0 : obj.uid);
+    vformData.append("UserId", String(userId));
 
     Fn_AddEditData(
       dispatch,
