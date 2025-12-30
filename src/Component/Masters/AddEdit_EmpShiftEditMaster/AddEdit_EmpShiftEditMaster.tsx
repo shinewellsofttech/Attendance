@@ -41,26 +41,6 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is admin (userType === 8)
-    try {
-      const storedUser = localStorage.getItem("authUser");
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        const userType = parsedUser?.F_UserType;
-        if (userType !== 8) {
-          navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
-          return;
-        }
-      } else {
-        navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
-        return;
-      }
-    } catch (error) {
-      console.error("Error parsing authUser from localStorage:", error);
-      navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
-      return;
-    }
-
     // Load Employee and Shift data for dropdowns
     Fn_FillListData(dispatch, setState, "EmployeeArray", API_URL_EMPLOYEE);
     Fn_FillListData(dispatch, setState, "ShiftArray", API_URL_SHIFT);
@@ -101,7 +81,7 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
     }
     
     let vformData = new FormData();
-    
+
     // Loop through all rows and append data
     values.Rows.forEach((row, index) => {
       vformData.append(`Rows[${index}].F_EmployeeMaster`, row.F_EmployeeMaster || "");
@@ -196,36 +176,36 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
                             <div key={rowIndex} className="emp-shift-row">
                               {/* Employee Field */}
                               <div style={{ minWidth: "200px", flex: "1 1 auto" }}>
-                                <FormGroup>
-                                  <Label>
+                              <FormGroup>
+                                <Label>
                                     Employee <span className="text-danger">*</span>
-                                  </Label>
-                                  <Input
-                                    type="select"
+                                </Label>
+                                <Input
+                                  type="select"
                                     value={row.F_EmployeeMaster}
                                     onChange={(e) => {
                                       const newRows = [...values.Rows];
                                       newRows[rowIndex].F_EmployeeMaster = e.target.value;
                                       setFieldValue("Rows", newRows);
                                     }}
-                                    onBlur={handleBlur}
-                                    className="btn-square"
+                                  onBlur={handleBlur}
+                                  className="btn-square"
                                     invalid={touched.Rows && errors.Rows && Array.isArray(errors.Rows) && errors.Rows[rowIndex] && !!(errors.Rows[rowIndex] as any)?.F_EmployeeMaster}
-                                  >
+                                >
                                     <option value="">Select Employee</option>
-                                    {state.EmployeeArray.map((item: any) => (
-                                      <option key={item.Id} value={item.Id}>
-                                        {item.Name || item.MachineEnrollmentNo || `Employee ${item.Id}`}
-                                      </option>
-                                    ))}
-                                  </Input>
+                                  {state.EmployeeArray.map((item: any) => (
+                                    <option key={item.Id} value={item.Id}>
+                                      {item.Name || item.MachineEnrollmentNo || `Employee ${item.Id}`}
+                                    </option>
+                                  ))}
+                                </Input>
                                   {touched.Rows && errors.Rows && Array.isArray(errors.Rows) && errors.Rows[rowIndex] && (errors.Rows[rowIndex] as any)?.F_EmployeeMaster && (
                                     <div className="text-danger small">
                                       {(errors.Rows[rowIndex] as any).F_EmployeeMaster}
                                     </div>
                                   )}
-                                </FormGroup>
-                              </div>
+                              </FormGroup>
+                            </div>
 
                               {/* Shift Master 1 Field */}
                               <div style={{ minWidth: "200px", flex: "1 1 auto" }}>
@@ -296,41 +276,41 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
                               {/* Action Buttons for each row */}
                               <div className="row-actions">
                                 {rowIndex === values.Rows.length - 1 && (
-                                  <Btn
-                                    color="success"
-                                    size="sm"
-                                    type="button"
-                                    onClick={() => {
+                              <Btn
+                                color="success"
+                                size="sm"
+                                type="button"
+                                onClick={() => {
                                       const newRows = [...values.Rows, {
                                         F_EmployeeMaster: "",
                                         F_ShiftMaster1: "",
                                         F_ShiftMaster2: "",
                                       }];
                                       setFieldValue("Rows", newRows);
-                                    }}
+                                }}
                                     style={{ minWidth: "40px", height: "40px" }}
                                     title="Add Row"
-                                  >
-                                    <i className="fa fa-plus"></i>
-                                  </Btn>
+                              >
+                                <i className="fa fa-plus"></i>
+                              </Btn>
                                 )}
                                 {values.Rows.length > 1 && (
-                                  <Btn
-                                    color="danger"
-                                    size="sm"
-                                    type="button"
-                                    onClick={() => {
+                                <Btn
+                                  color="danger"
+                                  size="sm"
+                                  type="button"
+                                  onClick={() => {
                                       const newRows = values.Rows.filter((_, index) => index !== rowIndex);
                                       setFieldValue("Rows", newRows);
-                                    }}
-                                    style={{ minWidth: "40px", height: "40px" }}
+                                  }}
+                                  style={{ minWidth: "40px", height: "40px" }}
                                     title="Remove Row"
-                                  >
-                                    <i className="fa fa-times"></i>
-                                  </Btn>
-                                )}
-                              </div>
+                                >
+                                  <i className="fa fa-times"></i>
+                                </Btn>
+                              )}
                             </div>
+                          </div>
                           ))}
                         </Col>
                       </Row>

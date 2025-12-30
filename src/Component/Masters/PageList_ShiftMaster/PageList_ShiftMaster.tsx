@@ -19,25 +19,6 @@ const PageList_ShiftMasterContainer = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is admin (userType === 8)
-    try {
-      const storedUser = localStorage.getItem("authUser");
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        const userType = parsedUser?.F_UserType;
-        if (userType !== 8) {
-          navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
-          return;
-        }
-      } else {
-        navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
-        return;
-      }
-    } catch (error) {
-      console.error("Error parsing authUser from localStorage:", error);
-      navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
-      return;
-    }
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -84,21 +65,46 @@ const PageList_ShiftMasterContainer = () => {
     navigate("/addEdit_ShiftMaster", { state: { Id: 0 } });
   };
 
-  const formatTime = (time: string) => {
+  const formatTime = (time: any) => {
     if (!time) return "-";
-    // If time is in HH:mm format, return as is
-    if (time.includes(":")) {
+    
+    // If time is already a string in HH:mm format, return as is
+    if (typeof time === "string") {
+      if (time.includes(":")) {
+        return time;
+      }
       return time;
     }
-    return time;
+    
+    // If time is an object with hours and minutes properties
+    if (typeof time === "object" && time !== null) {
+      const hours = time.hours !== undefined ? time.hours : (time.totalHours ? Math.floor(time.totalHours) : 0);
+      const minutes = time.minutes !== undefined ? time.minutes : (time.totalHours ? Math.round((time.totalHours - Math.floor(time.totalHours)) * 60) : 0);
+      
+      if (hours !== undefined && minutes !== undefined) {
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+      }
+      
+      // Try to extract from other possible properties
+      if (time.time) {
+        return typeof time.time === "string" ? time.time : String(time.time);
+      }
+    }
+    
+    // Fallback: convert to string
+    const timeStr = String(time);
+    if (timeStr === "undefined" || timeStr === "null") return "-";
+    return timeStr;
   };
 
   const filteredData = (Array.isArray(gridData) ? gridData : []).filter((item: any) => {
     const searchText = filterText.toLowerCase();
+    const inTimeStr = item.InTime ? (typeof item.InTime === "string" ? item.InTime : String(item.InTime)) : "";
+    const outTimeStr = item.OutTime ? (typeof item.OutTime === "string" ? item.OutTime : String(item.OutTime)) : "";
     return (
-      (item.Name && item.Name.toLowerCase().includes(searchText)) ||
-      (item.InTime && item.InTime.toLowerCase().includes(searchText)) ||
-      (item.OutTime && item.OutTime.toLowerCase().includes(searchText))
+      (item.Name && typeof item.Name === "string" && item.Name.toLowerCase().includes(searchText)) ||
+      (inTimeStr && inTimeStr.toLowerCase().includes(searchText)) ||
+      (outTimeStr && outTimeStr.toLowerCase().includes(searchText))
     );
   });
 

@@ -6,51 +6,49 @@ import Login from "../Component/Authentication/Login";
 const RouterData = () => {
   const storedUser = localStorage.getItem("authUser");
   let isAuthenticated = false;
-  let userType: number | null = null;
   if (storedUser) {
     try {
       const parsedUser = JSON.parse(storedUser);
       isAuthenticated = Number(parsedUser?.Id) > 0;
-      userType = parsedUser?.F_UserType || null;
     } catch (error) {
       console.error("Invalid authUser in localStorage", error);
       isAuthenticated = false;
     }
   }
   
-  // Determine default route based on user type
-  const getDefaultRoute = (): string => {
-    if (userType === 8) {
-      return `${process.env.PUBLIC_URL}/reports`; // Admin
-    } else {
-      return `${process.env.PUBLIC_URL}/employeeReports`; // Employee
+  const normalizePath = (path: string): string => {
+    const basePath = process.env.PUBLIC_URL || "";
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    if (basePath) {
+      return `${basePath}${cleanPath}`;
     }
+    return cleanPath;
   };
-  
-  const defaultRoute = getDefaultRoute();
-  
+
+  const defaultRoute = normalizePath("/reports");
+
   return (
     <BrowserRouter basename={"/"}>
       <Routes>
         <Route
-          path={`${process.env.PUBLIC_URL}` || "/"}
+          path={normalizePath("/")}
           element={
             isAuthenticated ? (
-              <Navigate to={defaultRoute} />
+              <Navigate to={defaultRoute} replace />
             ) : (
-              <Navigate to={`${process.env.PUBLIC_URL}/login`} />
+              <Navigate to={normalizePath("/login")} replace />
             )
           }
         />
-        <Route path={"/"} element={<PrivateRoute />}>
-          <Route path={`/*`} element={<LayoutRoutes />} />
-        </Route>
         <Route
-          path={`${process.env.PUBLIC_URL}/login`}
+          path={normalizePath("/login")}
           element={
-            isAuthenticated ? <Navigate to={defaultRoute} /> : <Login />
+            isAuthenticated ? <Navigate to={defaultRoute} replace /> : <Login />
           }
         />
+        <Route path="/*" element={<PrivateRoute />}>
+          <Route path="*" element={<LayoutRoutes />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

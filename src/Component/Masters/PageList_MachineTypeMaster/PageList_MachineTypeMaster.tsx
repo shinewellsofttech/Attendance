@@ -19,25 +19,6 @@ const PageList_MachineTypeMasterContainer = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is admin (userType === 8)
-    try {
-      const storedUser = localStorage.getItem("authUser");
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        const userType = parsedUser?.F_UserType;
-        if (userType !== 8) {
-          navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
-          return;
-        }
-      } else {
-        navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
-        return;
-      }
-    } catch (error) {
-      console.error("Error parsing authUser from localStorage:", error);
-      navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
-      return;
-    }
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

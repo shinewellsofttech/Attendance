@@ -22,28 +22,38 @@ import AdminRoute from "./AdminRoute";
 import AddEdit_MachineMaster from "../Pages/Masters/AddEdit_MachineMaster";
 import PageList_MachineMaster from "../Pages/Masters/PageList_MachineMaster";
 
+// Helper function to normalize paths
+const normalizePath = (path: string): string => {
+  const basePath = process.env.PUBLIC_URL || "";
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  if (basePath) {
+    return `${basePath}${cleanPath}`;
+  }
+  return cleanPath;
+};
+
 export const routes = [
   // Sample Page
-  { path: `${process.env.PUBLIC_URL}/reports`, Component: <Report /> },
-  { path: `${process.env.PUBLIC_URL}/employeeReports`, Component: <EmployeeReport /> },
-  { path: `${process.env.PUBLIC_URL}/addEdit_CompanyMaster`, Component: <AdminRoute><AddEdit_CompanyMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/companyMaster`, Component: <AdminRoute><PageList_CompanyMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/addEdit_ShiftMaster`, Component: <AdminRoute><AddEdit_ShiftMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/shiftMaster`, Component: <AdminRoute><PageList_ShiftMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/addEdit_HolidayMaster`, Component: <AdminRoute><AddEdit_HolidayMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/holidayMaster`, Component: <AdminRoute><PageList_HolidayMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/addEdit_EmployeeMaster`, Component: <AdminRoute><AddEdit_EmployeeMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/employeeMaster`, Component: <AdminRoute><PageList_EmployeeMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/addEdit_EmpShiftEditMaster`, Component: <AdminRoute><AddEdit_EmpShiftEditMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/employeeShiftEditMaster`, Component: <AdminRoute><PageList_EmpShiftEditMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/addEdit_MachineTypeMaster`, Component: <AdminRoute><AddEdit_MachineTypeMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/machineTypeMaster`, Component: <AdminRoute><PageList_MachineTypeMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/addEdit_StateMaster`, Component: <AdminRoute><AddEdit_StateMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/stateMaster`, Component: <AdminRoute><PageList_StateMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/addEdit_CityMaster`, Component: <AdminRoute><AddEdit_CityMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/cityMaster`, Component: <AdminRoute><PageList_CityMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/addEdit_MachineMaster`, Component: <AdminRoute><AddEdit_MachineMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/machineMaster`, Component: <AdminRoute><PageList_MachineMaster /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/globalOptions`, Component: <AdminRoute><GlobalOptions /></AdminRoute> },
-  { path: `${process.env.PUBLIC_URL}/taskManagement`, Component: <TaskManagement /> },
+  { path: normalizePath("/reports"), Component: <Report /> },
+  { path: normalizePath("/employeeReports"), Component: <EmployeeReport /> },
+  { path: normalizePath("/addEdit_CompanyMaster"), Component: <AdminRoute><AddEdit_CompanyMaster /></AdminRoute> },
+  { path: normalizePath("/companyMaster"), Component: <AdminRoute><PageList_CompanyMaster /></AdminRoute> },
+  { path: normalizePath("/addEdit_ShiftMaster"), Component: <AdminRoute><AddEdit_ShiftMaster /></AdminRoute> },
+  { path: normalizePath("/shiftMaster"), Component: <AdminRoute><PageList_ShiftMaster /></AdminRoute> },
+  { path: normalizePath("/addEdit_HolidayMaster"), Component: <AdminRoute><AddEdit_HolidayMaster /></AdminRoute> },
+  { path: normalizePath("/holidayMaster"), Component: <AdminRoute><PageList_HolidayMaster /></AdminRoute> },
+  { path: normalizePath("/addEdit_EmployeeMaster"), Component: <AdminRoute><AddEdit_EmployeeMaster /></AdminRoute> },
+  { path: normalizePath("/employeeMaster"), Component: <AdminRoute><PageList_EmployeeMaster /></AdminRoute> },
+  { path: normalizePath("/addEdit_EmpShiftEditMaster"), Component: <AdminRoute><AddEdit_EmpShiftEditMaster /></AdminRoute> },
+  { path: normalizePath("/employeeShiftEditMaster"), Component: <AdminRoute><PageList_EmpShiftEditMaster /></AdminRoute> },
+  { path: normalizePath("/addEdit_MachineTypeMaster"), Component: <AdminRoute><AddEdit_MachineTypeMaster /></AdminRoute> },
+  { path: normalizePath("/machineTypeMaster"), Component: <AdminRoute><PageList_MachineTypeMaster /></AdminRoute> },
+  { path: normalizePath("/addEdit_StateMaster"), Component: <AdminRoute><AddEdit_StateMaster /></AdminRoute> },
+  { path: normalizePath("/stateMaster"), Component: <AdminRoute><PageList_StateMaster /></AdminRoute> },
+  { path: normalizePath("/addEdit_CityMaster"), Component: <AdminRoute><AddEdit_CityMaster /></AdminRoute> },
+  { path: normalizePath("/cityMaster"), Component: <AdminRoute><PageList_CityMaster /></AdminRoute> },
+  { path: normalizePath("/addEdit_MachineMaster"), Component: <AdminRoute><AddEdit_MachineMaster /></AdminRoute> },
+  { path: normalizePath("/machineMaster"), Component: <AdminRoute><PageList_MachineMaster /></AdminRoute> },
+  { path: normalizePath("/globalOptions"), Component: <AdminRoute><GlobalOptions /></AdminRoute> },
+  { path: normalizePath("/taskManagement"), Component: <TaskManagement /> },
 ];

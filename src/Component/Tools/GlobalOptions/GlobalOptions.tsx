@@ -8,43 +8,45 @@ import { Card, CardBody, CardFooter, Col, Container, FormGroup, Input, Label, Ro
 import { Btn } from "../../../AbstractElements";
 import Breadcrumbs from "../../../CommonElements/Breadcrumbs/Breadcrumbs";
 import CardHeaderCommon from "../../../CommonElements/CardHeaderCommon/CardHeaderCommon";
-import { Fn_FillListData, Fn_DisplayData, Fn_AddEditData } from "../../../store/Functions";
+import { Fn_FillListData, Fn_AddEditData } from "../../../store/Functions";
 import { API_WEB_URLS } from "../../../constants/constAPI";
 import { convertTo12Hour, convertTo24Hour, formatTimeForAPI } from "../../../utils/timeFormatUtils";
 
 interface FormValues {
   // Holidays
-  Holidays: string;
+  F_DayMaster: number | string;
   // Time Settings
   InTime: string;
   OutTime: string;
-  // Working Hours
-  MinWorkingHoursFullDay: string;
-  MaxWorkingHoursFullDay: string;
-  MinWorkingHoursHalfDay: string;
-  MaxWorkingHoursHalfDay: string;
+  // Working Minutes
+  MinWorkingMinutesFullDay: number;
+  MaxWorkingMinutesFullDay: number;
+  MinWorkingMinutesHalfDay: number;
+  MaxWorkingMinutesHalfDay: number;
   // Checkboxes
-  RailwayTime: boolean;
-  OverTimeApply: boolean;
+  IsRailwayTime: boolean;
+  IsOverTimeApplicable: boolean;
   CountNextDayIn: boolean;
-  CountNextDayInHours: string;
+  CountNextDayAfterHours: number;
   // Machine Settings
-  MachineType: string;
-  MachineName: string;
+  F_MachineTypeMaster: number | string;
+  F_MachineMaster: number | string;
   MachineNo: string;
   IPAddress: string;
   PortNo: string;
 }
 
 const API_URL_SAVE = "GlobalOptions/0/token";
-const API_URL_EDIT = API_WEB_URLS.MASTER + "/0/token/GlobalOptions/Id/1";
+const API_URL_EDIT = API_WEB_URLS.MASTER + "/0/token/GlobalOptions/Id";
 
 const GlobalOptionsContainer = () => {
   const [state, setState] = useState({
     id: 0,
     formData: {} as any,
     isProgress: true,
+    DayMaster: [] as any[],
     MachineTypeMaster: [] as any[],
+    MachineMaster: [] as any[],
   });
 
   const dispatch = useDispatch();
@@ -58,7 +60,7 @@ const GlobalOptionsContainer = () => {
       if (!form) return;
 
       // Define field order (excluding readonly and checkbox fields)
-      const fieldOrder = ["Holidays", "InTime", "OutTime", "MinWorkingHoursFullDay", "MinWorkingHoursHalfDay", "MaxWorkingHoursHalfDay", "CountNextDayInHours", "MachineType", "MachineName", "MachineNo", "IPAddress", "PortNo"];
+      const fieldOrder = ["F_DayMaster", "InTime", "OutTime", "MinWorkingMinutesFullDay", "MinWorkingMinutesHalfDay", "MaxWorkingMinutesHalfDay", "CountNextDayAfterHours", "F_MachineTypeMaster", "F_MachineMaster", "MachineNo", "IPAddress", "PortNo"];
       const currentIndex = fieldOrder.indexOf(currentFieldName);
 
       if (currentIndex < fieldOrder.length - 1) {
@@ -84,39 +86,45 @@ const GlobalOptionsContainer = () => {
   };
 
   useEffect(() => {
-    // Check if user is admin (userType === 8)
-    try {
-      const storedUser = localStorage.getItem("authUser");
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        const userType = parsedUser?.F_UserType;
-        if (userType !== 8) {
-          navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
-          return;
-        }
-      } else {
-        navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
-        return;
-      }
-    } catch (error) {
-      console.error("Error parsing authUser from localStorage:", error);
-      navigate(`${process.env.PUBLIC_URL}/reports`, { replace: true });
-      return;
-    }
+    // Load DayMaster data for dropdown
+    const API_URL_DAY_MASTER = `${API_WEB_URLS.MASTER}/0/token/DayMaster`;
+    Fn_FillListData(dispatch, setState, "DayMaster", API_URL_DAY_MASTER + "/Id/0");
 
     // Load MachineTypeMaster data for dropdown
     const API_URL_MACHINE_TYPE = `${API_WEB_URLS.MASTER}/0/token/MachineTypeMaster`;
     Fn_FillListData(dispatch, setState, "MachineTypeMaster", API_URL_MACHINE_TYPE + "/Id/0");
 
-    // Load existing global options (assuming ID 1 for global settings)
-    Fn_DisplayData(dispatch, setState, 1, API_URL_EDIT);
+    // Load MachineMaster data for dropdown
+    const API_URL_MACHINE_MASTER = `${API_WEB_URLS.MASTER}/0/token/MachineMaster`;
+    Fn_FillListData(dispatch, setState, "MachineMaster", API_URL_MACHINE_MASTER + "/Id/0");
+
+    // Load existing global options using Fn_FillListData (assuming ID 1 for global settings)
+    setState((prevState) => ({
+      ...prevState,
+      id: 1,
+    }));
+    // Fn_FillListData will fetch data and store in GlobalOptionsArray, then extract first item as formData
+    const API_URL_GLOBAL_OPTIONS = API_WEB_URLS.MASTER + "/0/token/GlobalOptions/Id/1";
+    Fn_FillListData(dispatch, (prevState: any) => {
+      // Handle both function and object forms of prevState
+      const currentState = typeof prevState === "function" ? prevState({}) : prevState;
+      const newState = { ...currentState };
+      
+      // Fn_FillListData sets data in GlobalOptionsArray, extract first item as formData
+      if (newState.GlobalOptionsArray && Array.isArray(newState.GlobalOptionsArray) && newState.GlobalOptionsArray.length > 0) {
+        newState.formData = newState.GlobalOptionsArray[0];
+      }
+      newState.isProgress = false;
+      
+      return newState;
+    }, "GlobalOptionsArray", API_URL_GLOBAL_OPTIONS);
   }, [dispatch, navigate]);
 
   // Auto-focus on first field when form is ready
   useEffect(() => {
     if (!state.isProgress) {
       const timer = setTimeout(() => {
-        const firstInput = document.querySelector('.theme-form select[name="Holidays"]') as HTMLSelectElement;
+        const firstInput = document.querySelector('.theme-form select[name="F_DayMaster"]') as HTMLSelectElement;
         if (firstInput) {
           firstInput.focus();
         }
@@ -126,8 +134,8 @@ const GlobalOptionsContainer = () => {
   }, [state.isProgress, state.formData]);
 
 
-  const calculateWorkingHours = (inTime: string, outTime: string): string => {
-    if (!inTime || !outTime) return "";
+  const calculateWorkingMinutes = (inTime: string, outTime: string): number => {
+    if (!inTime || !outTime) return 0;
     try {
       // Convert to 24-hour format if needed
       const inTime24 = inTime.includes("AM") || inTime.includes("PM") ? convertTo24Hour(inTime) : inTime;
@@ -140,66 +148,73 @@ const GlobalOptionsContainer = () => {
       const outTotalMinutes = outHours * 60 + outMinutes;
       
       const diffMinutes = outTotalMinutes - inTotalMinutes;
-      const hours = Math.floor(diffMinutes / 60);
-      const minutes = diffMinutes % 60;
-      
-      return `${hours}.${Math.round((minutes / 60) * 100)}`;
+      return diffMinutes > 0 ? diffMinutes : 0;
     } catch (e) {
-      return "";
+      return 0;
     }
   };
 
   const validationSchema = Yup.object({
-    Holidays: Yup.string().required("Holidays is required"),
+    F_DayMaster: Yup.number().required("Holidays is required").min(1, "Please select a day"),
     InTime: Yup.string().required("In Time is required"),
     OutTime: Yup.string().required("Out Time is required"),
-    MinWorkingHoursFullDay: Yup.string().required("Min Working Hours Full Day is required"),
-    MaxWorkingHoursFullDay: Yup.string().required("Max Working Hours Full Day is required"),
-    MinWorkingHoursHalfDay: Yup.string().required("Min Working Hours Half Day is required"),
-    MaxWorkingHoursHalfDay: Yup.string().required("Max Working Hours Half Day is required"),
-    CountNextDayInHours: Yup.string().when("CountNextDayIn", {
+    MinWorkingMinutesFullDay: Yup.number().required("Min Working Hours Full Day is required").min(0),
+    MaxWorkingMinutesFullDay: Yup.number().required("Max Working Hours Full Day is required").min(0),
+    MinWorkingMinutesHalfDay: Yup.number().required("Min Working Hours Half Day is required").min(0),
+    MaxWorkingMinutesHalfDay: Yup.number().required("Max Working Hours Half Day is required").min(0),
+    CountNextDayAfterHours: Yup.number().when("CountNextDayIn", {
       is: true,
-      then: (schema) => schema.required("Hours is required when Count Next Day IN is enabled"),
+      then: (schema) => schema.required("Hours is required when Count Next Day IN is enabled").min(0),
       otherwise: (schema) => schema,
     }),
-    MachineType: Yup.string().required("Machine Type is required"),
-    MachineName: Yup.string().required("Machine Name is required"),
+    F_MachineTypeMaster: Yup.number().required("Machine Type is required").min(1, "Please select a machine type"),
+    F_MachineMaster: Yup.number().required("Machine is required").min(1, "Please select a machine"),
     MachineNo: Yup.string().required("Machine No. is required"),
     IPAddress: Yup.string().required("IP Address is required"),
     PortNo: Yup.string().required("Port No is required"),
   });
 
   const handleSubmit = (values: FormValues) => {
-    const obj = JSON.parse(localStorage.getItem("user") || "{}");
+    let userId = 0;
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const obj = JSON.parse(userStr);
+        userId = (obj && (obj.uid || obj.Id)) ? (obj.uid || obj.Id) : 0;
+      }
+    } catch (error) {
+      console.error("Error parsing user from localStorage:", error);
+    }
+
     let vformData = new FormData();
 
     // Holidays
-    vformData.append("Holidays", values.Holidays || "");
+    vformData.append("F_DayMaster", String(values.F_DayMaster || ""));
     
-    // Time Settings - Always send in 24-hour format
+    // Time Settings - Always send in 24-hour format (e.g., '09:00')
     vformData.append("InTime", formatTimeForAPI(values.InTime));
     vformData.append("OutTime", formatTimeForAPI(values.OutTime));
     
-    // Working Hours
-    vformData.append("MinWorkingHoursFullDay", values.MinWorkingHoursFullDay);
-    vformData.append("MaxWorkingHoursFullDay", values.MaxWorkingHoursFullDay);
-    vformData.append("MinWorkingHoursHalfDay", values.MinWorkingHoursHalfDay);
-    vformData.append("MaxWorkingHoursHalfDay", values.MaxWorkingHoursHalfDay);
+    // Working Minutes - Convert hours to minutes before sending to backend
+    vformData.append("MinWorkingMinutesFullDay", String(convertHoursToMinutes(values.MinWorkingMinutesFullDay)));
+    vformData.append("MaxWorkingMinutesFullDay", String(convertHoursToMinutes(values.MaxWorkingMinutesFullDay)));
+    vformData.append("MinWorkingMinutesHalfDay", String(convertHoursToMinutes(values.MinWorkingMinutesHalfDay)));
+    vformData.append("MaxWorkingMinutesHalfDay", String(convertHoursToMinutes(values.MaxWorkingMinutesHalfDay)));
     
     // Checkboxes
-    vformData.append("RailwayTime", values.RailwayTime ? "true" : "false");
-    vformData.append("OverTimeApply", values.OverTimeApply ? "true" : "false");
+    vformData.append("IsRailwayTime", values.IsRailwayTime ? "true" : "false");
+    vformData.append("IsOverTimeApplicable", values.IsOverTimeApplicable ? "true" : "false");
     vformData.append("CountNextDayIn", values.CountNextDayIn ? "true" : "false");
-    vformData.append("CountNextDayInHours", values.CountNextDayInHours || "0");
+    vformData.append("CountNextDayAfterHours", String(values.CountNextDayAfterHours || 0));
     
     // Machine Settings
-    vformData.append("F_MachineTypeMaster", values.MachineType);
-    vformData.append("MachineName", values.MachineName);
-    vformData.append("MachineNo", values.MachineNo);
-    vformData.append("IPAddress", values.IPAddress);
-    vformData.append("PortNo", values.PortNo);
+    vformData.append("F_MachineTypeMaster", String(values.F_MachineTypeMaster || ""));
+    vformData.append("F_MachineMaster", String(values.F_MachineMaster || ""));
+    vformData.append("MachineNo", values.MachineNo || "");
+    vformData.append("IPAddress", values.IPAddress || "");
+    vformData.append("PortNo", values.PortNo || "");
     
-    vformData.append("UserId", obj === null || obj === undefined ? 0 : obj.uid);
+    vformData.append("UserId", String(userId));
 
     Fn_AddEditData(
       dispatch,
@@ -213,7 +228,7 @@ const GlobalOptionsContainer = () => {
     ).then(() => {
       // Cache GlobalOptions in localStorage for RailwayTime access
       const optionsToCache = {
-        RailwayTime: values.RailwayTime,
+        RailwayTime: values.IsRailwayTime,
         InTime: formatTimeForAPI(values.InTime),
         OutTime: formatTimeForAPI(values.OutTime),
         // Add other important settings if needed
@@ -222,48 +237,91 @@ const GlobalOptionsContainer = () => {
     });
   };
 
-  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-  // Parse holidays from string or array
-  const parseHolidays = (holidays: string | string[] | undefined): string => {
-    if (!holidays) return "";
-    if (Array.isArray(holidays)) return holidays[0] || "";
-    if (typeof holidays === "string") {
-      return holidays;
+  // Helper function to convert hours to minutes
+  const convertHoursToMinutes = (hours: string | number | undefined): number => {
+    if (!hours) return 0;
+    if (typeof hours === "number") return Math.round(hours * 60);
+    try {
+      const hoursNum = parseFloat(String(hours));
+      return Math.round(hoursNum * 60);
+    } catch (e) {
+      return 0;
     }
-    return "";
+  };
+
+  // Helper function to convert minutes to hours
+  const convertMinutesToHours = (minutes: string | number | undefined): number => {
+    if (!minutes) return 0;
+    if (typeof minutes === "number") return minutes / 60;
+    try {
+      const minutesNum = parseFloat(String(minutes));
+      return minutesNum / 60;
+    } catch (e) {
+      return 0;
+    }
+  };
+
+  // Helper function to safely convert time value to string
+  const getTimeString = (time: any): string => {
+    if (!time) return "";
+    if (typeof time === "string") return time;
+    if (typeof time === "object") {
+      // If it's an object, try to extract time property
+      if (time.time) return String(time.time);
+      if (time.InTime) return String(time.InTime);
+      if (time.OutTime) return String(time.OutTime);
+      // If no time property, return empty string
+      return "";
+    }
+    return String(time);
   };
 
   // Format time for display based on RailwayTime setting
-  const formatTimeForDisplay = (time: string, isRailway: boolean): string => {
-    if (!time) return "";
+  const formatTimeForDisplay = (time: any, isRailway: boolean): string => {
+    const timeStr = getTimeString(time);
+    if (!timeStr || timeStr === "undefined" || timeStr === "null") return "";
     if (isRailway) {
       // Return in 24-hour format
-      return time.includes("AM") || time.includes("PM") ? convertTo24Hour(time) : time;
+      return timeStr.includes("AM") || timeStr.includes("PM") ? convertTo24Hour(timeStr) : timeStr;
     } else {
       // Return in 12-hour format
-      return time.includes("AM") || time.includes("PM") ? time : convertTo12Hour(time);
+      return timeStr.includes("AM") || timeStr.includes("PM") ? timeStr : convertTo12Hour(timeStr);
     }
   };
 
-  const isRailwayTimeInitial = state.formData?.RailwayTime === true || 
+  const isRailwayTimeInitial = state.formData?.IsRailwayTime === true || 
+                               state.formData?.IsRailwayTime === "true" || 
+                               state.formData?.IsRailwayTime === 1 ||
+                               state.formData?.RailwayTime === true || 
                                state.formData?.RailwayTime === "true" || 
                                state.formData?.RailwayTime === 1;
 
+
   const initialValues: FormValues = {
-    Holidays: parseHolidays(state.formData?.Holidays),
-    InTime: formatTimeForDisplay(state.formData?.InTime || "", isRailwayTimeInitial),
-    OutTime: formatTimeForDisplay(state.formData?.OutTime || "", isRailwayTimeInitial),
-    MinWorkingHoursFullDay: state.formData?.MinWorkingHoursFullDay || "",
-    MaxWorkingHoursFullDay: state.formData?.MaxWorkingHoursFullDay || calculateWorkingHours(state.formData?.InTime || "", state.formData?.OutTime || ""),
-    MinWorkingHoursHalfDay: state.formData?.MinWorkingHoursHalfDay || "",
-    MaxWorkingHoursHalfDay: state.formData?.MaxWorkingHoursHalfDay || "",
-    RailwayTime: state.formData?.RailwayTime || false,
-    OverTimeApply: state.formData?.OverTimeApply || false,
+    F_DayMaster: state.formData?.F_DayMaster || state.formData?.Holidays || "",
+    InTime: formatTimeForDisplay(state.formData?.InTime, isRailwayTimeInitial),
+    OutTime: formatTimeForDisplay(state.formData?.OutTime, isRailwayTimeInitial),
+    // Convert minutes to hours for display
+    MinWorkingMinutesFullDay: convertMinutesToHours(state.formData?.MinWorkingMinutesFullDay || 
+                              convertHoursToMinutes(state.formData?.MinWorkingHoursFullDay) || 0),
+    MaxWorkingMinutesFullDay: convertMinutesToHours(state.formData?.MaxWorkingMinutesFullDay || 
+                              (state.formData?.MaxWorkingHoursFullDay 
+                                ? convertHoursToMinutes(state.formData.MaxWorkingHoursFullDay)
+                                : calculateWorkingMinutes(state.formData?.InTime || "", state.formData?.OutTime || "")) || 0),
+    MinWorkingMinutesHalfDay: convertMinutesToHours(state.formData?.MinWorkingMinutesHalfDay || 
+                              convertHoursToMinutes(state.formData?.MinWorkingHoursHalfDay) || 0),
+    MaxWorkingMinutesHalfDay: convertMinutesToHours(state.formData?.MaxWorkingMinutesHalfDay || 
+                              convertHoursToMinutes(state.formData?.MaxWorkingHoursHalfDay) || 0),
+    IsRailwayTime: state.formData?.IsRailwayTime !== undefined 
+                   ? (state.formData.IsRailwayTime === true || state.formData.IsRailwayTime === "true" || state.formData.IsRailwayTime === 1)
+                   : (state.formData?.RailwayTime === true || state.formData?.RailwayTime === "true" || state.formData?.RailwayTime === 1 || false),
+    IsOverTimeApplicable: state.formData?.IsOverTimeApplicable !== undefined
+                          ? (state.formData.IsOverTimeApplicable === true || state.formData.IsOverTimeApplicable === "true" || state.formData.IsOverTimeApplicable === 1)
+                          : (state.formData?.OverTimeApply === true || state.formData?.OverTimeApply === "true" || state.formData?.OverTimeApply === 1 || false),
     CountNextDayIn: state.formData?.CountNextDayIn || false,
-    CountNextDayInHours: state.formData?.CountNextDayInHours || "0",
-    MachineType: state.formData?.F_MachineTypeMaster || state.formData?.MachineType || "",
-    MachineName: state.formData?.MachineName || "",
+    CountNextDayAfterHours: state.formData?.CountNextDayAfterHours || state.formData?.CountNextDayInHours || 0,
+    F_MachineTypeMaster: state.formData?.F_MachineTypeMaster || state.formData?.MachineType || "",
+    F_MachineMaster: state.formData?.F_MachineMaster || state.formData?.MachineName || "",
     MachineNo: state.formData?.MachineNo || "",
     IPAddress: state.formData?.IPAddress || "",
     PortNo: state.formData?.PortNo || "",
@@ -307,6 +365,13 @@ const GlobalOptionsContainer = () => {
               enableReinitialize
             >
               {({ values, handleChange, handleBlur, errors, touched, setFieldValue }: FormikProps<FormValues>) => {
+                // Get filtered MachineMaster list based on selected MachineType
+                const filteredMachineMaster = values.F_MachineTypeMaster 
+                  ? state.MachineMaster.filter((machine: any) => 
+                      String(machine.F_MachineTypeMaster) === String(values.F_MachineTypeMaster)
+                    )
+                  : [];
+
                 return (
                 <Form className="theme-form">
                   <Card>
@@ -324,22 +389,22 @@ const GlobalOptionsContainer = () => {
                             </Label>
                             <Input
                               type="select"
-                              name="Holidays"
-                              value={values.Holidays}
+                              name="F_DayMaster"
+                              value={values.F_DayMaster}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "Holidays")}
+                              onKeyDown={(e) => handleKeyDown(e, "F_DayMaster")}
                               className="btn-square"
-                              invalid={touched.Holidays && !!errors.Holidays}
+                              invalid={touched.F_DayMaster && !!errors.F_DayMaster}
                             >
                               <option value="">Select Day</option>
-                              {daysOfWeek.map((day) => (
-                                <option key={day} value={day}>
-                                  {day}
+                              {state.DayMaster.map((day: any) => (
+                                <option key={day.Id} value={day.Id}>
+                                  {day.Name || day.DayName || `Day ${day.Id}`}
                                 </option>
                               ))}
                             </Input>
-                            <ErrorMessage name="Holidays" component="div" className="text-danger small" />
+                            <ErrorMessage name="F_DayMaster" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
 
@@ -349,17 +414,24 @@ const GlobalOptionsContainer = () => {
                             <Label>
                               In Time <span className="text-danger">*</span>
                             </Label>
-                            {values.RailwayTime ? (
+                            {values.IsRailwayTime ? (
                               <Input
                                 type="time"
                                 name="InTime"
-                                value={values.InTime}
+                                value={(() => {
+                                  const timeStr = getTimeString(values.InTime);
+                                  if (!timeStr) return "";
+                                  return timeStr.includes("AM") || timeStr.includes("PM") ? convertTo24Hour(timeStr) : timeStr;
+                                })()}
                                 onChange={(e) => {
-                                  handleChange(e);
+                                  setFieldValue("InTime", e.target.value);
                                   if (values.OutTime) {
-                                    const hours = calculateWorkingHours(e.target.value, values.OutTime);
-                                    if (hours) {
-                                      setFieldValue("MaxWorkingHoursFullDay", hours);
+                                    const outTime24 = typeof values.OutTime === "string" && (values.OutTime.includes("AM") || values.OutTime.includes("PM")) 
+                                      ? convertTo24Hour(values.OutTime) 
+                                      : (values.OutTime || "");
+                                    const minutes = calculateWorkingMinutes(e.target.value, outTime24);
+                                    if (minutes > 0) {
+                                      setFieldValue("MaxWorkingMinutesFullDay", convertMinutesToHours(minutes));
                                     }
                                   }
                                 }}
@@ -372,13 +444,18 @@ const GlobalOptionsContainer = () => {
                                 type="text"
                                 name="InTime"
                                 placeholder="HH:MM AM/PM"
-                                value={
-                                  values.InTime.includes("AM") || values.InTime.includes("PM") 
-                                    ? values.InTime 
-                                    : (values.InTime && values.InTime.includes(":") && values.InTime.split(":")[1] && values.InTime.split(":")[1].length === 2)
-                                      ? convertTo12Hour(values.InTime)
-                                      : values.InTime
-                                }
+                                value={(() => {
+                                  const timeStr = getTimeString(values.InTime);
+                                  if (!timeStr) return "";
+                                  // If it's already in 12-hour format (AM/PM), return as is
+                                  if (timeStr.includes("AM") || timeStr.includes("PM")) return timeStr;
+                                  // If it's a complete 24-hour time (HH:MM format, length 5), convert to 12-hour
+                                  if (timeStr.includes(":") && timeStr.split(":")[1] && timeStr.split(":")[1].length === 2 && timeStr.length === 5) {
+                                    return convertTo12Hour(timeStr);
+                                  }
+                                  // If it's incomplete, show raw input so user can continue typing
+                                  return timeStr;
+                                })()}
                                 onChange={(e) => {
                                   // Store raw input while typing, convert on blur
                                   setFieldValue("InTime", e.target.value);
@@ -389,12 +466,12 @@ const GlobalOptionsContainer = () => {
                                   const time12 = convertTo12Hour(time24);
                                   setFieldValue("InTime", time12);
                                   if (values.OutTime) {
-                                    const outTime24 = values.OutTime.includes("AM") || values.OutTime.includes("PM") 
+                                    const outTime24 = typeof values.OutTime === "string" && (values.OutTime.includes("AM") || values.OutTime.includes("PM")) 
                                       ? convertTo24Hour(values.OutTime) 
-                                      : values.OutTime;
-                                    const hours = calculateWorkingHours(time24, outTime24);
-                                    if (hours) {
-                                      setFieldValue("MaxWorkingHoursFullDay", hours);
+                                      : (values.OutTime || "");
+                                    const minutes = calculateWorkingMinutes(time24, outTime24);
+                                    if (minutes > 0) {
+                                      setFieldValue("MaxWorkingMinutesFullDay", convertMinutesToHours(minutes));
                                     }
                                   }
                                   handleBlur(e);
@@ -413,17 +490,24 @@ const GlobalOptionsContainer = () => {
                             <Label>
                               Out Time <span className="text-danger">*</span>
                             </Label>
-                            {values.RailwayTime ? (
+                            {values.IsRailwayTime ? (
                               <Input
                                 type="time"
                                 name="OutTime"
-                                value={values.OutTime}
+                                value={(() => {
+                                  const timeStr = getTimeString(values.OutTime);
+                                  if (!timeStr) return "";
+                                  return timeStr.includes("AM") || timeStr.includes("PM") ? convertTo24Hour(timeStr) : timeStr;
+                                })()}
                                 onChange={(e) => {
-                                  handleChange(e);
+                                  setFieldValue("OutTime", e.target.value);
                                   if (values.InTime) {
-                                    const hours = calculateWorkingHours(values.InTime, e.target.value);
-                                    if (hours) {
-                                      setFieldValue("MaxWorkingHoursFullDay", hours);
+                                    const inTime24 = typeof values.InTime === "string" && (values.InTime.includes("AM") || values.InTime.includes("PM")) 
+                                      ? convertTo24Hour(values.InTime) 
+                                      : (values.InTime || "");
+                                    const minutes = calculateWorkingMinutes(inTime24, e.target.value);
+                                    if (minutes > 0) {
+                                      setFieldValue("MaxWorkingMinutesFullDay", convertMinutesToHours(minutes));
                                     }
                                   }
                                 }}
@@ -436,13 +520,18 @@ const GlobalOptionsContainer = () => {
                                 type="text"
                                 name="OutTime"
                                 placeholder="HH:MM AM/PM"
-                                value={
-                                  values.OutTime.includes("AM") || values.OutTime.includes("PM") 
-                                    ? values.OutTime 
-                                    : (values.OutTime && values.OutTime.includes(":") && values.OutTime.split(":")[1] && values.OutTime.split(":")[1].length === 2)
-                                      ? convertTo12Hour(values.OutTime)
-                                      : values.OutTime
-                                }
+                                value={(() => {
+                                  const timeStr = getTimeString(values.OutTime);
+                                  if (!timeStr) return "";
+                                  // If it's already in 12-hour format (AM/PM), return as is
+                                  if (timeStr.includes("AM") || timeStr.includes("PM")) return timeStr;
+                                  // If it's a complete 24-hour time (HH:MM format, length 5), convert to 12-hour
+                                  if (timeStr.includes(":") && timeStr.split(":")[1] && timeStr.split(":")[1].length === 2 && timeStr.length === 5) {
+                                    return convertTo12Hour(timeStr);
+                                  }
+                                  // If it's incomplete, show raw input so user can continue typing
+                                  return timeStr;
+                                })()}
                                 onChange={(e) => {
                                   // Store raw input while typing, convert on blur
                                   setFieldValue("OutTime", e.target.value);
@@ -453,12 +542,12 @@ const GlobalOptionsContainer = () => {
                                   const time12 = convertTo12Hour(time24);
                                   setFieldValue("OutTime", time12);
                                   if (values.InTime) {
-                                    const inTime24 = values.InTime.includes("AM") || values.InTime.includes("PM") 
+                                    const inTime24 = typeof values.InTime === "string" && (values.InTime.includes("AM") || values.InTime.includes("PM")) 
                                       ? convertTo24Hour(values.InTime) 
-                                      : values.InTime;
-                                    const hours = calculateWorkingHours(inTime24, time24);
-                                    if (hours) {
-                                      setFieldValue("MaxWorkingHoursFullDay", hours);
+                                      : (values.InTime || "");
+                                    const minutes = calculateWorkingMinutes(inTime24, time24);
+                                    if (minutes > 0) {
+                                      setFieldValue("MaxWorkingMinutesFullDay", convertMinutesToHours(minutes));
                                     }
                                   }
                                   handleBlur(e);
@@ -473,7 +562,7 @@ const GlobalOptionsContainer = () => {
                           </FormGroup>
                         </Col>
 
-                        {/* Working Hours */}
+                        {/* Working Minutes */}
                         <Col md="6">
                           <FormGroup>
                             <Label>
@@ -481,16 +570,17 @@ const GlobalOptionsContainer = () => {
                             </Label>
                             <Input
                               type="number"
-                              name="MinWorkingHoursFullDay"
+                              name="MinWorkingMinutesFullDay"
                               placeholder="Enter Min Working Hours Full Day"
-                              value={values.MinWorkingHoursFullDay}
+                              value={values.MinWorkingMinutesFullDay}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "MinWorkingHoursFullDay")}
-                              invalid={touched.MinWorkingHoursFullDay && !!errors.MinWorkingHoursFullDay}
+                              onKeyDown={(e) => handleKeyDown(e, "MinWorkingMinutesFullDay")}
+                              invalid={touched.MinWorkingMinutesFullDay && !!errors.MinWorkingMinutesFullDay}
+                              min="0"
                               step="0.01"
                             />
-                            <ErrorMessage name="MinWorkingHoursFullDay" component="div" className="text-danger small" />
+                            <ErrorMessage name="MinWorkingMinutesFullDay" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                         <Col md="6">
@@ -499,17 +589,19 @@ const GlobalOptionsContainer = () => {
                               Max Working Hours for Full day <span className="text-danger">*</span>
                             </Label>
                             <Input
-                              type="text"
-                              name="MaxWorkingHoursFullDay"
+                              type="number"
+                              name="MaxWorkingMinutesFullDay"
                               placeholder="Auto-filled from In/Out Time"
-                              value={values.MaxWorkingHoursFullDay}
+                              value={values.MaxWorkingMinutesFullDay}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              invalid={touched.MaxWorkingHoursFullDay && !!errors.MaxWorkingHoursFullDay}
+                              invalid={touched.MaxWorkingMinutesFullDay && !!errors.MaxWorkingMinutesFullDay}
                               readOnly
                               style={{ backgroundColor: "#f8f9fa" }}
+                              min="0"
+                              step="0.01"
                             />
-                            <ErrorMessage name="MaxWorkingHoursFullDay" component="div" className="text-danger small" />
+                            <ErrorMessage name="MaxWorkingMinutesFullDay" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                         <Col md="6">
@@ -519,16 +611,17 @@ const GlobalOptionsContainer = () => {
                             </Label>
                             <Input
                               type="number"
-                              name="MinWorkingHoursHalfDay"
+                              name="MinWorkingMinutesHalfDay"
                               placeholder="Enter Min Working Hours Half Day"
-                              value={values.MinWorkingHoursHalfDay}
+                              value={values.MinWorkingMinutesHalfDay}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "MinWorkingHoursHalfDay")}
-                              invalid={touched.MinWorkingHoursHalfDay && !!errors.MinWorkingHoursHalfDay}
+                              onKeyDown={(e) => handleKeyDown(e, "MinWorkingMinutesHalfDay")}
+                              invalid={touched.MinWorkingMinutesHalfDay && !!errors.MinWorkingMinutesHalfDay}
+                              min="0"
                               step="0.01"
                             />
-                            <ErrorMessage name="MinWorkingHoursHalfDay" component="div" className="text-danger small" />
+                            <ErrorMessage name="MinWorkingMinutesHalfDay" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                         <Col md="6">
@@ -538,16 +631,17 @@ const GlobalOptionsContainer = () => {
                             </Label>
                             <Input
                               type="number"
-                              name="MaxWorkingHoursHalfDay"
+                              name="MaxWorkingMinutesHalfDay"
                               placeholder="Enter Max Working Hours Half Day"
-                              value={values.MaxWorkingHoursHalfDay}
+                              value={values.MaxWorkingMinutesHalfDay}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "MaxWorkingHoursHalfDay")}
-                              invalid={touched.MaxWorkingHoursHalfDay && !!errors.MaxWorkingHoursHalfDay}
+                              onKeyDown={(e) => handleKeyDown(e, "MaxWorkingMinutesHalfDay")}
+                              invalid={touched.MaxWorkingMinutesHalfDay && !!errors.MaxWorkingMinutesHalfDay}
+                              min="0"
                               step="0.01"
                             />
-                            <ErrorMessage name="MaxWorkingHoursHalfDay" component="div" className="text-danger small" />
+                            <ErrorMessage name="MaxWorkingMinutesHalfDay" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
 
@@ -557,35 +651,37 @@ const GlobalOptionsContainer = () => {
                             <div className="form-check form-switch">
                               <Input
                                 type="checkbox"
-                                name="RailwayTime"
-                                checked={values.RailwayTime}
+                                name="IsRailwayTime"
+                                checked={values.IsRailwayTime}
                                 onChange={(e) => {
                                   const isRailwayTime = e.target.checked;
-                                  setFieldValue("RailwayTime", isRailwayTime);
+                                  setFieldValue("IsRailwayTime", isRailwayTime);
                                   // Convert times when switching format
                                   if (values.InTime) {
                                     if (isRailwayTime) {
                                       // Switching to 24-hour: ensure it's in 24-hour format
-                                      const inTime24 = values.InTime.includes("AM") || values.InTime.includes("PM") 
+                                      const inTime24 = typeof values.InTime === "string" && (values.InTime.includes("AM") || values.InTime.includes("PM")) 
                                         ? convertTo24Hour(values.InTime) 
-                                        : values.InTime;
+                                        : (values.InTime || "");
                                       setFieldValue("InTime", inTime24);
                                     } else {
                                       // Switching to 12-hour: convert to 12-hour format
-                                      const inTime12 = convertTo12Hour(values.InTime);
+                                      const inTimeStr = typeof values.InTime === "string" ? values.InTime : String(values.InTime || "");
+                                      const inTime12 = convertTo12Hour(inTimeStr);
                                       setFieldValue("InTime", inTime12);
                                     }
                                   }
                                   if (values.OutTime) {
                                     if (isRailwayTime) {
                                       // Switching to 24-hour: ensure it's in 24-hour format
-                                      const outTime24 = values.OutTime.includes("AM") || values.OutTime.includes("PM") 
+                                      const outTime24 = typeof values.OutTime === "string" && (values.OutTime.includes("AM") || values.OutTime.includes("PM")) 
                                         ? convertTo24Hour(values.OutTime) 
-                                        : values.OutTime;
+                                        : (values.OutTime || "");
                                       setFieldValue("OutTime", outTime24);
                                     } else {
                                       // Switching to 12-hour: convert to 12-hour format
-                                      const outTime12 = convertTo12Hour(values.OutTime);
+                                      const outTimeStr = typeof values.OutTime === "string" ? values.OutTime : String(values.OutTime || "");
+                                      const outTime12 = convertTo12Hour(outTimeStr);
                                       setFieldValue("OutTime", outTime12);
                                     }
                                   }
@@ -604,9 +700,9 @@ const GlobalOptionsContainer = () => {
                             <div className="form-check form-switch">
                               <Input
                                 type="checkbox"
-                                name="OverTimeApply"
-                                checked={values.OverTimeApply}
-                                onChange={(e) => setFieldValue("OverTimeApply", e.target.checked)}
+                                name="IsOverTimeApplicable"
+                                checked={values.IsOverTimeApplicable}
+                                onChange={(e) => setFieldValue("IsOverTimeApplicable", e.target.checked)}
                                 className="form-check-input"
                                 role="switch"
                               />
@@ -636,19 +732,20 @@ const GlobalOptionsContainer = () => {
                               <div style={{ minWidth: "100px" }}>
                                 <Input
                                   type="number"
-                                  name="CountNextDayInHours"
-                                  value={values.CountNextDayInHours}
+                                  name="CountNextDayAfterHours"
+                                  value={values.CountNextDayAfterHours}
                                   onChange={handleChange}
                                   onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "CountNextDayInHours")}
+                                  onKeyDown={(e) => handleKeyDown(e, "CountNextDayAfterHours")}
                                   disabled={!values.CountNextDayIn}
-                                  invalid={touched.CountNextDayInHours && !!errors.CountNextDayInHours}
+                                  invalid={touched.CountNextDayAfterHours && !!errors.CountNextDayAfterHours}
                                   style={{ width: "100px" }}
+                                  min="0"
                                 />
                               </div>
                               <Label>Hours</Label>
                             </div>
-                            <ErrorMessage name="CountNextDayInHours" component="div" className="text-danger small" />
+                            <ErrorMessage name="CountNextDayAfterHours" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
 
@@ -665,49 +762,52 @@ const GlobalOptionsContainer = () => {
                             </Label>
                             <Input
                               type="select"
-                              name="MachineType"
-                              value={values.MachineType}
+                              name="F_MachineTypeMaster"
+                              value={values.F_MachineTypeMaster}
                               onChange={(e) => {
                                 handleChange(e);
-                                // Auto-fill Machine Name when Machine Type is selected
-                                const selectedMachineType = state.MachineTypeMaster.find(
-                                  (item: any) => String(item.Id) === String(e.target.value)
-                                );
-                                if (selectedMachineType) {
-                                  setFieldValue("MachineName", selectedMachineType.MachineName || "");
-                                }
+                                // Clear Machine selection when Machine Type changes
+                                setFieldValue("F_MachineMaster", "");
                               }}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "MachineType")}
+                              onKeyDown={(e) => handleKeyDown(e, "F_MachineTypeMaster")}
                               className="btn-square"
-                              invalid={touched.MachineType && !!errors.MachineType}
+                              invalid={touched.F_MachineTypeMaster && !!errors.F_MachineTypeMaster}
                             >
                               <option value="">Select Machine Type</option>
                               {state.MachineTypeMaster.map((item: any) => (
                                 <option key={item.Id} value={item.Id}>
-                                  {item.MachineType}
+                                  {item.Name || item.MachineType || `Machine Type ${item.Id}`}
                                 </option>
                               ))}
                             </Input>
-                            <ErrorMessage name="MachineType" component="div" className="text-danger small" />
+                            <ErrorMessage name="F_MachineTypeMaster" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
-                        <Col md="3">
+                        <Col md="6">
                           <FormGroup>
                             <Label>
-                              Machine Name <span className="text-danger">*</span>
+                              Machine <span className="text-danger">*</span>
                             </Label>
                             <Input
-                              type="text"
-                              name="MachineName"
-                              placeholder="Auto-filled from Machine Type"
-                              value={values.MachineName}
+                              type="select"
+                              name="F_MachineMaster"
+                              value={values.F_MachineMaster}
                               onChange={handleChange}
                               onBlur={handleBlur}
-                              onKeyDown={(e) => handleKeyDown(e, "MachineName")}
-                              invalid={touched.MachineName && !!errors.MachineName}
-                            />
-                            <ErrorMessage name="MachineName" component="div" className="text-danger small" />
+                              onKeyDown={(e) => handleKeyDown(e, "F_MachineMaster")}
+                              className="btn-square"
+                              invalid={touched.F_MachineMaster && !!errors.F_MachineMaster}
+                              disabled={!values.F_MachineTypeMaster}
+                            >
+                              <option value="">Select Machine</option>
+                              {filteredMachineMaster.map((machine: any) => (
+                                <option key={machine.Id} value={machine.Id}>
+                                  {machine.Name || `Machine ${machine.Id}`}
+                                </option>
+                              ))}
+                            </Input>
+                            <ErrorMessage name="F_MachineMaster" component="div" className="text-danger small" />
                           </FormGroup>
                         </Col>
                         <Col md="3">
