@@ -21,6 +21,12 @@ import GlobalOptions from "../Pages/Tools/GlobalOptions";
 import AdminRoute from "./AdminRoute";
 import AddEdit_MachineMaster from "../Pages/Masters/AddEdit_MachineMaster";
 import PageList_MachineMaster from "../Pages/Masters/PageList_MachineMaster";
+import AddEdit_DepartmentMaster from "../Pages/Masters/AddEdit_DepartmentMaster";
+import PageList_DepartmentMaster from "../Pages/Masters/PageList_DepartmentMaster";
+import AddEdit_DesignationMaster from "../Pages/Masters/AddEdit_DesignationMaster";
+import PageList_DesignationMaster from "../Pages/Masters/PageList_DesignationMaster";
+import PageListEmployeeReport from "../Pages/Reports/PageListEmployeeReport";
+import EmployeeReportDetail from "../Pages/Reports/EmployeeReport";
 
 // Helper function to normalize paths
 const normalizePath = (path: string): string => {
@@ -56,4 +62,10 @@ export const routes = [
   { path: normalizePath("/machineMaster"), Component: <AdminRoute><PageList_MachineMaster /></AdminRoute> },
   { path: normalizePath("/globalOptions"), Component: <AdminRoute><GlobalOptions /></AdminRoute> },
   { path: normalizePath("/taskManagement"), Component: <TaskManagement /> },
+  { path: normalizePath("/addEdit_DepartmentMaster"), Component: <AdminRoute><AddEdit_DepartmentMaster /></AdminRoute> },
+  { path: normalizePath("/departmentMaster"), Component: <AdminRoute><PageList_DepartmentMaster /></AdminRoute> },
+  { path: normalizePath("/addEdit_DesignationMaster"), Component: <AdminRoute><AddEdit_DesignationMaster /></AdminRoute> },
+  { path: normalizePath("/designationMaster"), Component: <AdminRoute><PageList_DesignationMaster /></AdminRoute> },
+  { path: normalizePath("/pageListEmployeeReport"), Component: <PageListEmployeeReport /> },
+  { path: normalizePath("/employeeReport"), Component: <EmployeeReportDetail /> },
 ];
