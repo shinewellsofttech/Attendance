@@ -68,7 +68,9 @@ const EmployeeReportContainer = () => {
   const handlePrintOption = (printType: string) => {
     togglePrintModal();
     
-    if (printType === "pfDeclaration") {
+    if (printType === "all") {
+      printAllForms();
+    } else if (printType === "pfDeclaration") {
       printPFDeclaration();
     } else if (printType === "form18") {
       printFormNo18();
@@ -76,8 +78,27 @@ const EmployeeReportContainer = () => {
       printAppointmentLetter();
     } else if (printType === "application") {
       printApplicationForm();
+    } else if (printType === "declaration") {
+      printDeclarationForm();
     }
     // Other print types will be implemented later
+  };
+
+  const printAllForms = () => {
+    // Print all forms sequentially with delays to ensure proper printing
+    printPFDeclaration();
+    setTimeout(() => {
+      printFormNo18();
+    }, 500);
+    setTimeout(() => {
+      printAppointmentLetter();
+    }, 1000);
+    setTimeout(() => {
+      printApplicationForm();
+    }, 1500);
+    setTimeout(() => {
+      printDeclarationForm();
+    }, 2000);
   };
 
   const printPFDeclaration = () => {
@@ -477,6 +498,8 @@ ${companyAddress}</div>
       </html>
     `;
 
+    
+
     // Open print window
     const printWindow = window.open('', '_blank');
     if (printWindow) {
@@ -855,8 +878,14 @@ ${companyAddress}</div>
     const dateOfBirth = formatDateForDisplay(employeeData?.DateOfBirth) || "";
     const dateOfBirthFormatted = dateOfBirth ? dateOfBirth.split('-').reverse().join('.') : "";
     const fatherName = employeeData?.FatherName || "";
+    const fatherDOB = formatDateForDisplay(employeeData?.FatherDateOfBirth || employeeData?.FathersDateOfBirth || "") || "";
+    const fatherDOBFormatted = fatherDOB ? fatherDOB.split('-').reverse().join('.') : "";
     const motherName = employeeData?.MotherName || employeeData?.MothersName || "";
+    const motherDOB = formatDateForDisplay(employeeData?.MotherDateOfBirth || employeeData?.MothersDateOfBirth || "") || "";
+    const motherDOBFormatted = motherDOB ? motherDOB.split('-').reverse().join('.') : "";
     const wifeName = employeeData?.WifeName || employeeData?.WifesName || "";
+    const wifeDOB = formatDateForDisplay(employeeData?.WifeDateOfBirth || employeeData?.WifesDateOfBirth || "") || "";
+    const wifeDOBFormatted = wifeDOB ? wifeDOB.split('-').reverse().join('.') : "";
     const gender = employeeData?.Gender || "";
     const bloodGroup = employeeData?.BloodGroup || "";
     const religion = employeeData?.Religion || "";
@@ -865,7 +894,7 @@ ${companyAddress}</div>
     const localAddress = employeeData?.LocalAddress || "";
     const contactNumber = employeeData?.MobileNo || "";
     const mobileNo = employeeData?.MobileNo || "";
-    const oldESINo = employeeData?.OldESINo || "";
+    const oldESINo = employeeData?.OldESINo || employeeData?.EmployeeESICNo || "";
     const uanNo = employeeData?.UANNo || "";
     const localReference = employeeData?.LocalReference || "";
     const qualification = employeeData?.Qualification || "";
@@ -881,7 +910,7 @@ ${companyAddress}</div>
     
     // Company details
     const companyName = employeeData?.CompanyName || "Latiyal Handicrafts Pvt. Ltd";
-    const companyAddress = employeeData?.CompanyAddress || "Plot No. SPL #1, 2nd Phase, RIICO Industrial Area, Boranada, Jodhpur - 3420012. Rajasthan";
+    const companyAddress = employeeData?.CompanyAddress || "Plot No. SPL #1, 2nd Phase, RIICO Industrial Area, Boranada, Jodhpur - 342012. Rajasthan";
 
     // Create print content
     const printContent = `
@@ -893,7 +922,7 @@ ${companyAddress}</div>
         <style>
           @page {
             size: A4 portrait;
-            margin: 1.2cm;
+            margin: 0.8cm;
           }
           @media print {
             body { 
@@ -909,183 +938,699 @@ ${companyAddress}</div>
           }
           body {
             font-family: Arial, sans-serif;
-            padding: 10px;
-            max-width: 900px;
-            margin: 0 auto;
+            padding: 5px;
+            margin: 0;
             line-height: 1.4;
+            font-size: 12px;
           }
           .form-container {
-            padding: 20px;
+            padding: 15px;
             border: 2px solid #000;
             box-sizing: border-box;
           }
           .header {
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             position: relative;
           }
           .header-top {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
           }
           .header-left {
             flex: 1;
           }
           .company-name {
-            font-size: 18px;
+            font-size: 25px;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
           }
           .company-address {
-            font-size: 12px;
-            margin-bottom: 10px;
+            font-size: 11px;
+            line-height: 1.3;
           }
           .photo-box {
-            width: 120px;
-            height: 150px;
+            width: 95px;
+            height: 115px;
             border: 2px solid #000;
             background-color: #fff;
             flex-shrink: 0;
           }
           .form-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             text-align: center;
-            margin: 15px 0 20px 0;
+            margin: 10px 0 12px 0;
             text-decoration: underline;
           }
           .form-content {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
           }
-          .left-column, .right-column {
-            flex: 1;
+          .full-width-row {
+            width: 100%;
+            margin-bottom: 5px;
           }
           .form-row {
             display: flex;
-            margin-bottom: 8px;
-            align-items: center;
+            margin-bottom: 5px;
+            align-items: flex-start;
           }
           .form-label {
-            font-size: 13px;
+            font-size: 11px;
             font-weight: bold;
-            min-width: 140px;
+            min-width: 120px;
             flex-shrink: 0;
           }
           .form-value {
-            font-size: 13px;
+            font-size: 11px;
             flex: 1;
             border-bottom: 1px solid #000;
-            padding: 2px 5px;
-            min-height: 18px;
+            padding: 2px 4px;
+            min-height: 16px;
           }
           .form-value-empty {
             border-bottom: 1px solid #000;
-            min-height: 18px;
+            min-height: 16px;
             flex: 1;
           }
           .children-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 5px;
+            margin-top: 4px;
+            margin-bottom: 5px;
           }
           .children-table th,
           .children-table td {
             border: 1px solid #000;
-            padding: 5px 8px;
-            font-size: 12px;
+            padding: 3px 5px;
+            font-size: 10px;
             text-align: left;
           }
           .children-table th {
             font-weight: bold;
+            background-color: #f0f0f0;
           }
-          .children-table td {
-            min-height: 20px;
+          .children-table td:first-child {
+            text-align: center;
+            width: 45px;
           }
           .caste-options {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
-            margin-left: 140px;
+            flex-wrap: wrap;
+            margin-left: 120px;
+            font-size: 11px;
           }
           .caste-option {
             display: flex;
             align-items: center;
-            gap: 5px;
-            font-size: 12px;
-          }
-          .caste-checkbox {
-            width: 15px;
-            height: 15px;
-            border: 1px solid #000;
-            display: inline-block;
-            position: relative;
-          }
-          .caste-checkbox.checked::after {
-            content: '✓';
-            position: absolute;
-            top: -2px;
-            left: 2px;
-            font-size: 12px;
-            color: #000;
-          }
-          .gender-options {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-left: 140px;
+            gap: 4px;
           }
           .section-title {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
-            margin: 15px 0 8px 0;
+            margin: 8px 0 5px 0;
             text-decoration: underline;
           }
-          .full-width-row {
-            width: 100%;
-            margin-bottom: 8px;
-          }
           .full-width-label {
-            font-size: 13px;
+            font-size: 11px;
             font-weight: bold;
             margin-bottom: 3px;
           }
           .full-width-value {
-            font-size: 13px;
+            font-size: 11px;
             border-bottom: 1px solid #000;
-            padding: 2px 5px;
+            padding: 2px 4px;
             min-height: 18px;
           }
           .office-use-section {
-            margin-top: 20px;
+            margin-top: 12px;
             padding: 10px;
             border: 2px solid #000;
             background-color: #f9f9f9;
           }
           .office-use-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             text-align: center;
           }
           .footer-section {
             display: flex;
             justify-content: space-between;
-            margin-top: 40px;
+            margin-top: 20px;
+            padding-top: 15px;
           }
           .footer-label {
-            font-size: 13px;
+            font-size: 11px;
             font-weight: bold;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+            min-width: 220px;
           }
           .button-container {
             text-align: center;
-            margin: 20px 0;
+            margin: 15px 0;
           }
           .print-btn {
-            padding: 10px 30px;
-            font-size: 16px;
+            padding: 8px 20px;
+            font-size: 14px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+          }
+          .print-btn:hover {
+            background-color: #0056b3;
+          }
+          .print-btn.close-btn {
+            background-color: #6c757d;
+          }
+          .print-btn.close-btn:hover {
+            background-color: #545b62;
+          }
+          .two-column-section {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 6px;
+          }
+          .two-column-section .form-row {
+            flex: 1;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="button-container no-print">
+          <button class="print-btn" onclick="window.print()">Print</button>
+          <button class="print-btn close-btn" onclick="window.close()">Close</button>
+        </div>
+
+        <div class="form-container">
+          <div class="header">
+            <div class="header-top">
+              <div class="header-left">
+                <div class="company-name">${companyName}</div>
+                <div class="company-address">${companyAddress}</div>
+              </div>
+              <div class="photo-box"></div>
+            </div>
+            <div class="form-title">Application-Form</div>
+          </div>
+
+          <div class="form-content">
+            <!-- Row 1: Employee Name (Full Width) -->
+            <div class="full-width-row">
+              <div class="form-label" style="display: inline-block; min-width: 110px;">Employee Name:-</div>
+              <div class="form-value" style="display: inline-block; width: calc(100% - 130px);">${employeeName}</div>
+            </div>
+
+            <!-- Row 2: DOB and Blood Group -->
+            <div class="two-column-section">
+              <div class="form-row">
+                <div class="form-label">Date Of Birth:</div>
+                <div class="form-value">${dateOfBirthFormatted}</div>
+              </div>
+              <div class="form-row">
+                <div class="form-label">Blood Group:</div>
+                <div class="form-value">${bloodGroup}</div>
+              </div>
+            </div>
+
+            <!-- Row 3: Father Name and Father DOB -->
+            <div class="two-column-section">
+              <div class="form-row">
+                <div class="form-label">Father's Name:-</div>
+                <div class="form-value">${fatherName}</div>
+              </div>
+              <div class="form-row">
+                <div class="form-label">Date Of Birth:</div>
+                <div class="form-value">${fatherDOBFormatted}</div>
+              </div>
+            </div>
+
+            <!-- Row 4: Mother Name and Mother DOB -->
+            <div class="two-column-section">
+              <div class="form-row">
+                <div class="form-label">Mother's Name:</div>
+                <div class="form-value">${motherName}</div>
+              </div>
+              <div class="form-row">
+                <div class="form-label">Date Of Birth:</div>
+                <div class="form-value">${motherDOBFormatted}</div>
+              </div>
+            </div>
+
+            <!-- Row 5: Wife Name and Wife DOB -->
+            <div class="two-column-section">
+              <div class="form-row">
+                <div class="form-label">Wife's Name:</div>
+                <div class="form-value">${wifeName}</div>
+              </div>
+              <div class="form-row">
+                <div class="form-label">Date Of Birth:</div>
+                <div class="form-value">${wifeDOBFormatted}</div>
+              </div>
+            </div>
+
+            <!-- Child Details Grid: Sr.No, Name, DOB, Gender -->
+            <div style="margin-top: 8px;">
+              <div class="form-label" style="margin-bottom: 4px;">Child Details:</div>
+              <table class="children-table">
+                <thead>
+                  <tr>
+                    <th style="width: 40px;">Sr.No.</th>
+                    <th>Name</th>
+                    <th>DOB</th>
+                    <th>Gender</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${Array.from({ length: 5 }, (_, i) => {
+                    const child = children[i] || {};
+                    let childDOB = "";
+                    if (child.DateOfBirth) {
+                      const dob = formatDateForDisplay(child.DateOfBirth);
+                      childDOB = dob ? dob.split('-').reverse().join('.') : "";
+                    }
+                    return `
+                      <tr>
+                        <td>${i + 1}</td>
+                        <td>${child.Name || ""}</td>
+                        <td>${childDOB}</td>
+                        <td>${child.Gender || ""}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Row 6: Caste and Religion -->
+            <div class="two-column-section" style="margin-top: 8px;">
+              <div class="form-row">
+                <div class="form-label">Caste:</div>
+                <div class="caste-options" style="margin-left: 0; flex: 1;">
+                  <div class="caste-option">
+                    <span>☐</span><span>SC,</span>
+                  </div>
+                  <div class="caste-option">
+                    <span>☐</span><span>ST,</span>
+                  </div>
+                  <div class="caste-option">
+                    <span>☐</span><span>OBC,</span>
+                  </div>
+                  <div class="caste-option">
+                    <span>☐</span><span>GEN.</span>
+                  </div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-label">Religion:</div>
+                <div class="form-value">${religion}</div>
+              </div>
+            </div>
+
+            <!-- Permanent Address -->
+            <div class="form-row" style="margin-top: 8px;">
+              <div class="form-label">Permanent Address:</div>
+              <div class="form-value">${permanentAddress}</div>
+            </div>
+          </div>
+
+          <div class="two-column-section">
+            <div class="form-row">
+              <div class="form-label">Contact Number:</div>
+              <div class="form-value">${contactNumber}</div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">Mobile No.:</div>
+              <div class="form-value">${mobileNo}</div>
+            </div>
+          </div>
+
+          <div class="full-width-row">
+            <div class="full-width-label">Local Address:-</div>
+            <div class="full-width-value">${localAddress}</div>
+          </div>
+
+          <div class="two-column-section">
+            <div class="form-row">
+              <div class="form-label">Old ESI No.:</div>
+              <div class="form-value">${oldESINo}</div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">UAN No.:</div>
+              <div class="form-value">${uanNo}</div>
+            </div>
+          </div>
+
+          <div class="full-width-row">
+            <div class="full-width-label">Local Reference:-</div>
+            <div class="full-width-value">${localReference}</div>
+          </div>
+
+          <div class="full-width-row">
+            <div class="full-width-label">Qualification:-</div>
+            <div class="full-width-value" style="min-height: 35px;">${qualification}</div>
+          </div>
+
+          <div class="full-width-row">
+            <div class="full-width-label">Working Experience (if Any):</div>
+            <div class="full-width-value" style="min-height: 40px;">${workingExperience}</div>
+          </div>
+
+          <div class="office-use-section">
+            <div class="office-use-title">OFFICE USE ONLY</div>
+            <div class="two-column-section">
+              <div class="form-row">
+                <div class="form-label">Date Of Joining:</div>
+                <div class="form-value">${dateOfJoiningFormatted}</div>
+              </div>
+              <div class="form-row">
+                <div class="form-label">Salary:</div>
+                <div class="form-value">${salary}</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">Dept./Designation:</div>
+              <div class="form-value">${department ? department + '/' : ''}${designation}</div>
+            </div>
+          </div>
+
+          <div class="footer-section">
+            <div class="footer-label">Sign/Thums Mark of Emp.</div>
+            <div class="footer-label">Authorized Signatory.</div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Open print window
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      // Wait for content to load, then trigger print
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 250);
+    }
+  };
+
+  const printDeclarationForm = () => {
+    const employeeData = state.formData;
+    
+    // Extract employee data
+    const employeeName = employeeData?.Name || "";
+    const dateOfBirth = formatDateForDisplay(employeeData?.DateOfBirth) || "";
+    const dateOfBirthFormatted = dateOfBirth ? dateOfBirth.split('-').reverse().join('.') : "";
+    const dateOfJoining = formatDateForDisplay(employeeData?.DateOfJoining) || "";
+    const dateOfJoiningFormatted = dateOfJoining ? dateOfJoining.split('-').reverse().join('.') : "";
+    const fatherName = employeeData?.FatherName || "";
+    const gender = employeeData?.Gender || "";
+    const status = employeeData?.Status || "";
+    const aadharNumber = employeeData?.AadharNumber || "";
+    const bankACNo = employeeData?.BankACNo || "";
+    const mobileNo = employeeData?.MobileNo || "";
+    const panNumber = employeeData?.PANNumber || "";
+    const ifscCode = employeeData?.IFCSCode || "";
+    const permanentAddress = employeeData?.Address || "";
+    const temporaryAddress = employeeData?.LocalAddress || "";
+    const employeeESINo = employeeData?.EmployeeESICNo || employeeData?.EmployeeESINo || "";
+    const employeeUANNo = employeeData?.UANNo || "";
+    const employeePFNo = employeeData?.EmployeePFNo || "";
+    const esiDispESINo = employeeData?.ESICIPNo || "";
+    
+    // Company details
+    const companyName = employeeData?.CompanyName || "LATIYAL HANDICRAFTS PVT LTD";
+    const companyAddress = employeeData?.CompanyAddress || "Plot No. SPL #1, 2nd Phase, RIICO Industrial Area, Boranada, Jodhpur - 342012. Rajasthan";
+    const employerPFNo = employeeData?.EmployerPFNo || employeeData?.CompanyPFNo || "RJJOD0017602000";
+    const employerESINo = employeeData?.EmployerESINo || employeeData?.CompanyESINo || "27000250830000901";
+    
+    // Family Members
+    const familyMembers = employeeData?.FamilyMembers || [];
+    
+    // Nominees
+    const nominees = employeeData?.Nominees || [];
+
+    // Create print content
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Declaration Form</title>
+        <style>
+          @page {
+            size: A4 portrait;
+            margin: 1cm;
+          }
+          @media print {
+            body { 
+              margin: 0;
+              padding: 0;
+            }
+            .no-print { 
+              display: none !important; 
+            }
+            .form-container {
+              page-break-inside: avoid;
+            }
+          }
+          body {
+            font-family: Arial, sans-serif;
+            padding: 5px;
+            margin: 0;
+            line-height: 1.4;
+            font-size: 11px;
+          }
+          .form-container {
+            padding: 15px;
+            border: 2px solid #000;
+            box-sizing: border-box;
+          }
+          .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+          }
+          .logo-left, .logo-right {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .logo-left img, .logo-right img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+          }
+          .title-section {
+            flex: 1;
+            text-align: center;
+            margin: 0 15px;
+          }
+          .main-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-decoration: underline;
+          }
+          .subtitle {
+            font-size: 11px;
+            font-weight: bold;
+          }
+          .top-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            gap: 20px;
+          }
+          .employee-status {
+            flex: 1;
+          }
+          .status-label {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .checkbox-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+          }
+          .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+          }
+          .checkbox {
+            width: 15px;
+            height: 15px;
+            border: 2px solid #000;
+            display: inline-block;
+          }
+          .status-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+          }
+          .status-field {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .status-field-label {
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 140px;
+          }
+          .status-field-value {
+            flex: 1;
+            border-bottom: 1px solid #000;
+            padding: 2px 5px;
+            min-height: 16px;
+            font-size: 11px;
+          }
+          .company-details {
+            flex: 1;
+            border: 1px solid #000;
+            padding: 10px;
+          }
+          .company-details-title {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 8px;
+          }
+          .company-name {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .company-address {
+            font-size: 10px;
+            line-height: 1.3;
+            margin-bottom: 8px;
+            white-space: pre-line;
+          }
+          .company-field {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 5px;
+            font-size: 11px;
+          }
+          .company-field-label {
+            font-weight: bold;
+            min-width: 120px;
+          }
+          .company-field-value {
+            flex: 1;
+            border-bottom: 1px solid #000;
+            padding: 2px 5px;
+            min-height: 16px;
+          }
+          .personal-details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+          }
+          .personal-details-table td {
+            border: 1px solid #000;
+            padding: 5px 8px;
+            font-size: 11px;
+          }
+          .personal-details-table .label-cell {
+            font-weight: bold;
+            background-color: #f0f0f0;
+            width: 200px;
+          }
+          .personal-details-table .value-cell {
+            border-bottom: 1px solid #000;
+          }
+          .address-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+          }
+          .address-section {
+            flex: 1;
+          }
+          .address-label {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .address-value {
+            font-size: 11px;
+            border: 1px solid #000;
+            padding: 5px 8px;
+            min-height: 30px;
+          }
+          .table-section {
+            margin-bottom: 15px;
+          }
+          .table-title {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .data-table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          .data-table th,
+          .data-table td {
+            border: 1px solid #000;
+            padding: 5px 8px;
+            font-size: 10px;
+            text-align: left;
+          }
+          .data-table th {
+            font-weight: bold;
+            background-color: #f0f0f0;
+          }
+          .data-table td {
+            min-height: 20px;
+          }
+          .data-table.nominee-table td {
+            min-height: 35px;
+            padding: 8px;
+          }
+          .data-table .sno-cell {
+            text-align: center;
+            width: 40px;
+          }
+          .signature-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+          }
+          .signature-box {
+            flex: 1;
+            text-align: center;
+          }
+          .signature-label {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 40px;
+          }
+          .button-container {
+            text-align: center;
+            margin: 15px 0;
+          }
+          .print-btn {
+            padding: 8px 20px;
+            font-size: 14px;
             background-color: #007bff;
             color: white;
             border: none;
@@ -1111,175 +1656,196 @@ ${companyAddress}</div>
         </div>
 
         <div class="form-container">
-          <div class="header">
-            <div class="header-top">
-              <div class="header-left">
-                <div class="company-name">${companyName}</div>
-                <div class="company-address">${companyAddress}</div>
-              </div>
-              <div class="photo-box"></div>
+          <!-- Header with Logos -->
+          <div class="header-section">
+            <div class="logo-left">
+              <img src="${window.location.origin}${process.env.PUBLIC_URL || ''}/assets/images/Main-Images/EPFO-logo.png" alt="EPFO Logo" />
             </div>
-            <div class="form-title">Application-Form</div>
+            <div class="title-section">
+              <div class="main-title">DECLARATION FORM</div>
+              <div class="subtitle">EMPLOYESS DETAILS FORM ESI FORM 1 & PF FORM 2(COMBINED FORM)</div>
+            </div>
+            <div class="logo-right">
+              <img src="${window.location.origin}${process.env.PUBLIC_URL || ''}/assets/images/Main-Images/ESIC-logo.png" alt="ESIC Logo" />
+            </div>
           </div>
 
-          <div class="form-content">
-            <div class="left-column">
-              <div class="form-row">
-                <div class="form-label">Employee Name:</div>
-                <div class="form-value">${employeeName}</div>
+          <!-- Top Section: Employee Status and Company Details -->
+          <div class="top-section">
+            <div class="employee-status">
+              <div class="status-label">Employee Status:</div>
+              <div class="checkbox-group">
+                <div class="checkbox-item">
+                  <span class="checkbox"></span>
+                  <span>NEW</span>
+                </div>
+                <div class="checkbox-item">
+                  <span class="checkbox"></span>
+                  <span>REJOIN</span>
+                </div>
               </div>
-              <div class="form-row">
-                <div class="form-label">Date Of Birth:</div>
-                <div class="form-value">${dateOfBirthFormatted}</div>
+              <div class="status-fields">
+                <div class="status-field">
+                  <div class="status-field-label">EMPLOYEE ESI NO.</div>
+                  <div class="status-field-value">${employeeESINo}</div>
+                </div>
+                <div class="status-field">
+                  <div class="status-field-label">EMPLOYEE UAN NO.</div>
+                  <div class="status-field-value">${employeeUANNo}</div>
+                </div>
+                <div class="status-field">
+                  <div class="status-field-label">PF NO.</div>
+                  <div class="status-field-value">${employeePFNo}</div>
+                </div>
               </div>
-              <div class="form-row">
-                <div class="form-label">Father's Name:</div>
-                <div class="form-value">${fatherName}</div>
+            </div>
+
+            <div class="company-details">
+              <div class="company-details-title">NAME AND ADDRESS OF COMPANY:</div>
+              <div class="company-name">${companyName}</div>
+              <div class="company-address">${companyAddress}</div>
+              <div class="company-field">
+                <div class="company-field-label">EMPLOYER PF NO.:-</div>
+                <div class="company-field-value">${employerPFNo}</div>
               </div>
-              <div class="form-row">
-                <div class="form-label">Mother's Name:</div>
-                <div class="form-value">${motherName}</div>
+              <div class="company-field">
+                <div class="company-field-label">EMPLOYER ESI NO.:-</div>
+                <div class="company-field-value">${employerESINo}</div>
               </div>
-              <div class="form-row">
-                <div class="form-label">Wife's Name:</div>
-                <div class="form-value">${wifeName}</div>
-              </div>
-              
-              <div style="margin-top: 12px;">
-                <div class="form-label" style="margin-bottom: 5px;">Child Details:</div>
-                <table class="children-table">
-                  <thead>
+            </div>
+          </div>
+
+          <!-- Personal Details Table -->
+          <table class="personal-details-table">
+            <tr>
+              <td class="label-cell">NAME</td>
+              <td class="value-cell">${employeeName}</td>
+              <td class="label-cell">DATE OF BIRTH</td>
+              <td class="value-cell">${dateOfBirthFormatted}</td>
+            </tr>
+            <tr>
+              <td class="label-cell">FATHER'S/HUSBAND NAME</td>
+              <td class="value-cell">${fatherName}</td>
+              <td class="label-cell">DOJ</td>
+              <td class="value-cell">${dateOfJoiningFormatted}</td>
+            </tr>
+            <tr>
+              <td class="label-cell">GENDER</td>
+              <td class="value-cell">${gender}</td>
+              <td class="label-cell">MOBILE NO.</td>
+              <td class="value-cell">${mobileNo}</td>
+            </tr>
+            <tr>
+              <td class="label-cell">STATUS</td>
+              <td class="value-cell">${status}</td>
+              <td class="label-cell">ESI DISP. ESI NO.</td>
+              <td class="value-cell">${esiDispESINo}</td>
+            </tr>
+            <tr>
+              <td class="label-cell">AADHAR NUMBER</td>
+              <td class="value-cell">${aadharNumber}</td>
+              <td class="label-cell">PAN NO.</td>
+              <td class="value-cell">${panNumber}</td>
+            </tr>
+            <tr>
+              <td class="label-cell">BANK A/C NUMBER</td>
+              <td class="value-cell">${bankACNo}</td>
+              <td class="label-cell">IFSC CODE</td>
+              <td class="value-cell">${ifscCode}</td>
+            </tr>
+          </table>
+
+          <!-- Address Sections -->
+          <div class="address-row">
+            <div class="address-section">
+              <div class="address-label">ADDRESS PERMANENT</div>
+              <div class="address-value">${permanentAddress}</div>
+            </div>
+            <div class="address-section">
+              <div class="address-label">ADDRESS TEMPORARY</div>
+              <div class="address-value">${temporaryAddress}</div>
+            </div>
+          </div>
+
+          <!-- Family Details Table -->
+          <div class="table-section">
+            <div class="table-title">FAMILY DETAILS:</div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th class="sno-cell">S.NO.</th>
+                  <th>NAME OF FAMILY MEMBER</th>
+                  <th>RELATION</th>
+                  <th>DOB</th>
+                  <th>AADHAR</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Array.from({ length: 6 }, (_, i) => {
+                  const member = familyMembers[i] || {};
+                  let memberDOB = "";
+                  if (member.DateOfBirth) {
+                    const dob = formatDateForDisplay(member.DateOfBirth);
+                    memberDOB = dob ? dob.split('-').reverse().join('.') : "";
+                  }
+                  return `
                     <tr>
-                      <th style="width: 60px;">S.No.</th>
-                      <th>Name</th>
+                      <td class="sno-cell">${i + 1}.</td>
+                      <td>${member.Name || ""}</td>
+                      <td>${member.Relation || ""}</td>
+                      <td>${memberDOB}</td>
+                      <td>${member.Aadhar || ""}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    ${Array.from({ length: 5 }, (_, i) => {
-                      const child = children[i] || {};
-                      return `
-                        <tr>
-                          <td style="text-align: center;">${i + 1}</td>
-                          <td>${child.Name || ""}</td>
-                        </tr>
-                      `;
-                    }).join('')}
-                  </tbody>
-                </table>
-              </div>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
 
-              <div class="form-row" style="margin-top: 10px;">
-                <div class="form-label">Caste:</div>
-                <div class="caste-options">
-                  <div class="caste-option">
-                    <span class="caste-checkbox ${caste === 'SC' ? 'checked' : ''}"></span>
-                    <span>SC,</span>
-                  </div>
-                  <div class="caste-option">
-                    <span class="caste-checkbox ${caste === 'ST' ? 'checked' : ''}"></span>
-                    <span>ST,</span>
-                  </div>
-                  <div class="caste-option">
-                    <span class="caste-checkbox ${caste === 'OBC' ? 'checked' : ''}"></span>
-                    <span>OBC,</span>
-                  </div>
-                  <div class="caste-option">
-                    <span class="caste-checkbox ${caste === 'GEN' || caste === 'GEN.' ? 'checked' : ''}"></span>
-                    <span>GEN.</span>
-                  </div>
-                </div>
-              </div>
+          <!-- Nominee Details Table -->
+          <div class="table-section">
+            <div class="table-title">NOMINEE DETAILS:</div>
+            <table class="data-table nominee-table">
+              <thead>
+                <tr>
+                  <th>NOMINEE NAME</th>
+                  <th>RELATION</th>
+                  <th>DOB</th>
+                  <th>SHARING</th>
+                  <th>AADHAR</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Array.from({ length: 3 }, (_, i) => {
+                  const nominee = nominees[i] || {};
+                  let nomineeDOB = "";
+                  if (nominee.DateOfBirth) {
+                    const dob = formatDateForDisplay(nominee.DateOfBirth);
+                    nomineeDOB = dob ? dob.split('-').reverse().join('.') : "";
+                  }
+                  const sharing = nominee.SharePercentage ? nominee.SharePercentage + "%" : "";
+                  return `
+                    <tr>
+                      <td>${nominee.Name || ""}</td>
+                      <td>${nominee.Relation || ""}</td>
+                      <td>${nomineeDOB}</td>
+                      <td>${sharing}</td>
+                      <td>${nominee.Aadhar || ""}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
 
-              <div class="form-row" style="margin-top: 10px;">
-                <div class="form-label">Permanent Address:</div>
-                <div class="form-value">${permanentAddress}</div>
-              </div>
+          <!-- Signature Section -->
+          <div class="signature-section">
+            <div class="signature-box">
+              <div class="signature-label">Employee Sign.</div>
             </div>
-
-            <div class="right-column">
-              <div class="form-row">
-                <div class="form-label">Blood Group:</div>
-                <div class="form-value">${bloodGroup}</div>
-              </div>
-              <div class="form-row">
-                <div class="form-label">Gender:</div>
-                <div class="gender-options">
-                  <div class="caste-option">
-                    <span class="caste-checkbox ${gender === 'M' || gender === 'Male' ? 'checked' : ''}"></span>
-                    <span>M/</span>
-                  </div>
-                  <div class="caste-option">
-                    <span class="caste-checkbox ${gender === 'F' || gender === 'Female' ? 'checked' : ''}"></span>
-                    <span>F</span>
-                  </div>
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-label">Religion:</div>
-                <div class="form-value">${religion}</div>
-              </div>
+            <div class="signature-box">
+              <div class="signature-label">Authorized Sign.</div>
             </div>
-          </div>
-
-          <div class="section-title">Contact Information</div>
-          <div class="form-row">
-            <div class="form-label">Contact Number:</div>
-            <div class="form-value">${contactNumber}</div>
-          </div>
-          <div class="form-row">
-            <div class="form-label">Mobile No.:</div>
-            <div class="form-value">${mobileNo}</div>
-          </div>
-
-          <div class="section-title">Local Address</div>
-          <div class="full-width-row">
-            <div class="full-width-label">Local Address:</div>
-            <div class="full-width-value">${localAddress}</div>
-          </div>
-
-          <div class="section-title">Other Identification Numbers</div>
-          <div class="form-row">
-            <div class="form-label">Old ESI No.:</div>
-            <div class="form-value">${oldESINo}</div>
-          </div>
-          <div class="form-row">
-            <div class="form-label">UAN No.:</div>
-            <div class="form-value">${uanNo}</div>
-          </div>
-
-          <div class="section-title">Reference, Qualification, Experience</div>
-          <div class="form-row">
-            <div class="form-label">Local Reference:</div>
-            <div class="form-value">${localReference}</div>
-          </div>
-          <div class="form-row">
-            <div class="form-label">Qualification:</div>
-            <div class="form-value">${qualification}</div>
-          </div>
-          <div class="full-width-row">
-            <div class="full-width-label">Working Experience (if Any):</div>
-            <div class="full-width-value" style="min-height: 40px;">${workingExperience}</div>
-          </div>
-
-          <div class="office-use-section">
-            <div class="office-use-title">OFFICE USE ONLY</div>
-            <div class="form-row">
-              <div class="form-label">Date Of Joining:</div>
-              <div class="form-value">${dateOfJoiningFormatted}</div>
-            </div>
-            <div class="form-row">
-              <div class="form-label">Dept./Designation:</div>
-              <div class="form-value">${department ? department + '/' : ''}${designation}</div>
-            </div>
-            <div class="form-row">
-              <div class="form-label">Salary:</div>
-              <div class="form-value">${salary}</div>
-            </div>
-          </div>
-
-          <div class="footer-section">
-            <div class="footer-label">Sign/Thums Mark of Emp.</div>
-            <div class="footer-label">Authorized Signatory.</div>
           </div>
         </div>
       </body>
@@ -1314,6 +1880,8 @@ ${companyAddress}</div>
     { value: "form18", label: "Form No. 18" },
     { value: "application", label: "Application-Form" },
     { value: "pfDeclaration", label: "PF-Declaration" },
+    { value: "all", label: "Print All Forms" },
+
   ];
 
   const employeeData = state.formData;
