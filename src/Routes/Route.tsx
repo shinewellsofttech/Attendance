@@ -27,6 +27,7 @@ import AddEdit_DesignationMaster from "../Pages/Masters/AddEdit_DesignationMaste
 import PageList_DesignationMaster from "../Pages/Masters/PageList_DesignationMaster";
 import PageListEmployeeReport from "../Pages/Reports/PageListEmployeeReport";
 import EmployeeReportDetail from "../Pages/Reports/EmployeeReport";
+import AttendanceImport from "../Pages/Transeactions/InportFromText";
 
 // Helper function to normalize paths
 const normalizePath = (path: string): string => {
@@ -68,4 +69,5 @@ export const routes = [
   { path: normalizePath("/designationMaster"), Component: <AdminRoute><PageList_DesignationMaster /></AdminRoute> },
   { path: normalizePath("/pageListEmployeeReport"), Component: <PageListEmployeeReport /> },
   { path: normalizePath("/employeeReport"), Component: <EmployeeReportDetail /> },
+  { path: normalizePath("/importFromText"), Component: <AttendanceImport /> },
 ];

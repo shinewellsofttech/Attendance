@@ -665,112 +665,120 @@ const PageList_EmployeeMasterContainer = () => {
             font-family: Arial, sans-serif;
             padding: 5px;
             margin: 0;
-            line-height: 1.4;
-            font-size: 12px;
+            line-height: 1.5;
+            font-size: 13px;
           }
           .form-container {
-            padding: 15px;
+            padding: 18px;
             border: 2px solid #000;
             box-sizing: border-box;
+            min-height: calc(29.7cm - 1.6cm);
           }
           .header {
-            margin-bottom: 10px;
+            margin-bottom: 1px;
             position: relative;
           }
           .header-top {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 6px;
+            margin-bottom: -20px;
           }
           .header-left {
             flex: 1;
           }
           .company-name {
-            font-size: 25px;
+            font-size: 24px;
             font-weight: bold;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
           }
           .company-address {
             font-size: 11px;
-            line-height: 1.3;
+            line-height: 1.2;
           }
           .photo-box {
-            width: 95px;
-            height: 115px;
+            width: 85px;
+            height: 100px;
             border: 2px solid #000;
             background-color: #fff;
             flex-shrink: 0;
           }
           .form-title {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             text-align: center;
-            margin: 10px 0 12px 0;
+            margin: 6px 0 12px 0;
             text-decoration: underline;
           }
           .form-content {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
           }
           .full-width-row {
             width: 100%;
-            margin-bottom: 5px;
+            margin-bottom: 7px;
           }
           .form-row {
             display: flex;
-            margin-bottom: 5px;
+            margin-bottom: 7px;
             align-items: flex-start;
           }
           .form-label {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
             min-width: 120px;
             flex-shrink: 0;
           }
           .form-value {
-            font-size: 11px;
+            font-size: 12px;
             flex: 1;
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             gap: 2px;
             align-items: center;
-            border-bottom: 1px solid #000;
-            padding: 2px 4px;
-            min-height: 20px;
+            padding: 3px 5px;
+            min-height: 23px;
+            overflow-x: auto;
+          }
+          .form-value.address-field {
+            flex-wrap: wrap;
+            align-content: flex-start;
+            min-height: 50px;
+            overflow-x: visible;
           }
           .char-box {
             display: inline-block;
-            width: 18px;
-            height: 18px;
+            width: 19px;
+            height: 21px;
             border: 1px solid #000;
             text-align: center;
-            line-height: 18px;
-            font-size: 11px;
+            line-height: 21px;
+            font-size: 12px;
             margin: 0 1px;
+            flex-shrink: 0;
           }
           .char-box:empty {
             background-color: transparent;
           }
           .form-value-empty {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             gap: 2px;
-            border-bottom: 1px solid #000;
-            padding: 2px 4px;
-            min-height: 20px;
+            padding: 3px 5px;
+            min-height: 23px;
             flex: 1;
+            overflow-x: auto;
           }
           .children-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 4px;
-            margin-bottom: 5px;
+            margin-top: 6px;
+            margin-bottom: 7px;
           }
           .children-table th,
           .children-table td {
             border: 1px solid #000;
-            padding: 3px 5px;
-            font-size: 10px;
+            padding: 5px 6px;
+            font-size: 11px;
             text-align: left;
           }
           .children-table th {
@@ -787,56 +795,74 @@ const PageList_EmployeeMasterContainer = () => {
             align-items: center;
             flex-wrap: wrap;
             margin-left: 120px;
-            font-size: 11px;
+            font-size: 12px;
           }
           .caste-option {
             display: flex;
             align-items: center;
             gap: 4px;
           }
-          .section-title {
+          .caste-checkbox {
+            display: inline-block;
+            width: 19px;
+            height: 21px;
+            border: 1px solid #000;
+            text-align: center;
+            line-height: 21px;
             font-size: 12px;
+            margin: 0;
+            flex-shrink: 0;
+            background-color: transparent;
+          }
+          .section-title {
+            font-size: 13px;
             font-weight: bold;
-            margin: 8px 0 5px 0;
+            margin: 10px 0 6px 0;
             text-decoration: underline;
           }
           .full-width-label {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
-            margin-bottom: 3px;
+            margin-bottom: 4px;
           }
           .full-width-value {
-            font-size: 11px;
+            font-size: 12px;
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             gap: 2px;
-            border-bottom: 1px solid #000;
-            padding: 2px 4px;
-            min-height: 20px;
+            padding: 3px 5px;
+            min-height: 25px;
+            overflow-x: auto;
+          }
+          .full-width-value.address-field {
+            flex-wrap: wrap;
+            align-content: flex-start;
+            min-height: 50px;
+            overflow-x: visible;
           }
           .office-use-section {
-            margin-top: 12px;
-            padding: 10px;
+            margin-top: 15px;
+            padding: 12px;
             border: 2px solid #000;
             background-color: #f9f9f9;
           }
           .office-use-title {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             text-align: center;
           }
           .footer-section {
             display: flex;
             justify-content: space-between;
-            margin-top: 20px;
-            padding-top: 15px;
+            margin-top: 25px;
+            padding-top: 18px;
           }
           .footer-label {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
             border-top: 1px solid #000;
-            padding-top: 5px;
+            padding-top: 6px;
             min-width: 220px;
           }
           .button-container {
@@ -870,6 +896,7 @@ const PageList_EmployeeMasterContainer = () => {
           .two-column-section .form-row {
             flex: 1;
           }
+          
         </style>
       </head>
       <body>
@@ -892,16 +919,16 @@ const PageList_EmployeeMasterContainer = () => {
 
           <div class="form-content">
             <!-- Row 1: Employee Name (Full Width) -->
-            <div class="full-width-row">
-              <div class="form-label" style="display: inline-block; min-width: 110px;">Employee Name:-</div>
-              <div class="form-value" style="display: inline-block; width: calc(100% - 130px);">${createCharacterBoxes("", 50)}</div>
+            <div class="form-row">
+              <div class="form-label">Employee Name:-</div>
+              <div class="form-value">${createCharacterBoxes("", 30)}</div>
             </div>
 
             <!-- Row 2: DOB and Blood Group -->
             <div class="two-column-section">
               <div class="form-row">
                 <div class="form-label">Date Of Birth:</div>
-                <div class="form-value">${createDateBoxes("", 10)}</div>
+                <div class="form-value">${createDateBoxes("", 8)}</div>
               </div>
               <div class="form-row">
                 <div class="form-label">Blood Group:</div>
@@ -913,11 +940,11 @@ const PageList_EmployeeMasterContainer = () => {
             <div class="two-column-section">
               <div class="form-row">
                 <div class="form-label">Father's Name:-</div>
-                <div class="form-value">${createCharacterBoxes("", 40)}</div>
+                <div class="form-value">${createCharacterBoxes("", 20)}</div>
               </div>
               <div class="form-row">
                 <div class="form-label">Date Of Birth:</div>
-                <div class="form-value">${createDateBoxes("", 10)}</div>
+                <div class="form-value">${createDateBoxes("", 8)}</div>
               </div>
             </div>
 
@@ -925,11 +952,11 @@ const PageList_EmployeeMasterContainer = () => {
             <div class="two-column-section">
               <div class="form-row">
                 <div class="form-label">Mother's Name:</div>
-                <div class="form-value">${createCharacterBoxes("", 40)}</div>
+                <div class="form-value">${createCharacterBoxes("", 20)}</div>
               </div>
               <div class="form-row">
                 <div class="form-label">Date Of Birth:</div>
-                <div class="form-value">${createDateBoxes("", 10)}</div>
+                <div class="form-value">${createDateBoxes("", 8)}</div>
               </div>
             </div>
 
@@ -937,17 +964,17 @@ const PageList_EmployeeMasterContainer = () => {
             <div class="two-column-section">
               <div class="form-row">
                 <div class="form-label">Wife's Name:</div>
-                <div class="form-value">${createCharacterBoxes("", 40)}</div>
+                <div class="form-value">${createCharacterBoxes("", 20)}</div>
               </div>
               <div class="form-row">
                 <div class="form-label">Date Of Birth:</div>
-                <div class="form-value">${createDateBoxes("", 10)}</div>
+                <div class="form-value">${createDateBoxes("", 8)}</div>
               </div>
             </div>
 
             <!-- Child Details Grid: Sr.No, Name, DOB, Gender -->
-            <div style="margin-top: 8px;">
-              <div class="form-label" style="margin-bottom: 4px;">Child Details:</div>
+            <div style="margin-top: 10px;">
+              <div class="form-label" style="margin-bottom: 5px;">Child Details:</div>
               <table class="children-table">
                 <thead>
                   <tr>
@@ -961,9 +988,9 @@ const PageList_EmployeeMasterContainer = () => {
                   ${Array.from({ length: 5 }, (_, i) => `
                     <tr>
                       <td>${i + 1}</td>
-                      <td><div class="form-value" style="border: none; padding: 0;">${createCharacterBoxes("", 30)}</div></td>
-                      <td><div class="form-value" style="border: none; padding: 0;">${createDateBoxes("", 10)}</div></td>
-                      <td><div class="form-value" style="border: none; padding: 0;">${createCharacterBoxes("", 5)}</div></td>
+                      <td><div class="form-value" style="border: none; padding: 0;">${createCharacterBoxes("", 25)}</div></td>
+                      <td><div class="form-value" style="border: none; padding: 0;">${createDateBoxes("", 8)}</div></td>
+                      <td><div class="form-value" style="border: none; padding: 0;">${createCharacterBoxes("", 1)}</div></td>
                     </tr>
                   `).join('')}
                 </tbody>
@@ -971,34 +998,34 @@ const PageList_EmployeeMasterContainer = () => {
             </div>
 
             <!-- Row 6: Caste and Religion -->
-            <div class="two-column-section" style="margin-top: 8px;">
+            <div class="two-column-section" style="margin-top: 10px;">
               <div class="form-row">
                 <div class="form-label">Caste:</div>
                 <div class="caste-options" style="margin-left: 0; flex: 1;">
                   <div class="caste-option">
-                    <span>☐</span><span>SC,</span>
+                    <span class="caste-checkbox"></span><span>SC,</span>
                   </div>
                   <div class="caste-option">
-                    <span>☐</span><span>ST,</span>
+                    <span class="caste-checkbox"></span><span>ST,</span>
                   </div>
                   <div class="caste-option">
-                    <span>☐</span><span>OBC,</span>
+                    <span class="caste-checkbox"></span><span>OBC,</span>
                   </div>
                   <div class="caste-option">
-                    <span>☐</span><span>GEN.</span>
+                    <span class="caste-checkbox"></span><span>GEN.</span>
                   </div>
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-label">Religion:</div>
-                <div class="form-value">${createCharacterBoxes("", 15)}</div>
+                <div class="form-value">${createCharacterBoxes("", 10)}</div>
               </div>
             </div>
 
             <!-- Permanent Address -->
-            <div class="form-row" style="margin-top: 8px;">
+            <div class="form-row" style="margin-top: 10px;">
               <div class="form-label">Permanent Address:</div>
-              <div class="form-value">${createCharacterBoxes("", 60)}</div>
+              <div class="form-value address-field">${createCharacterBoxes("", 68)}</div>
             </div>
           </div>
 
@@ -1015,33 +1042,33 @@ const PageList_EmployeeMasterContainer = () => {
 
           <div class="full-width-row">
             <div class="full-width-label">Local Address:-</div>
-            <div class="full-width-value">${createCharacterBoxes("", 60)}</div>
+            <div class="full-width-value address-field">${createCharacterBoxes("", 35)}</div>
           </div>
 
           <div class="two-column-section">
             <div class="form-row">
               <div class="form-label">Old ESI No.:</div>
-              <div class="form-value">${createCharacterBoxes("", 20)}</div>
+              <div class="form-value">${createCharacterBoxes("", 15)}</div>
             </div>
             <div class="form-row">
               <div class="form-label">UAN No.:</div>
-              <div class="form-value">${createCharacterBoxes("", 20)}</div>
+              <div class="form-value">${createCharacterBoxes("", 15)}</div>
             </div>
           </div>
 
           <div class="full-width-row">
             <div class="full-width-label">Local Reference:-</div>
-            <div class="full-width-value">${createCharacterBoxes("", 50)}</div>
+            <div class="full-width-value">${createCharacterBoxes("", 30)}</div>
           </div>
 
           <div class="full-width-row">
             <div class="full-width-label">Qualification:-</div>
-            <div class="full-width-value" style="min-height: 35px;">${createCharacterBoxes("", 50)}</div>
+            <div class="full-width-value" style="min-height: 35px;">${createCharacterBoxes("", 30)}</div>
           </div>
 
           <div class="full-width-row">
             <div class="full-width-label">Working Experience (if Any):</div>
-            <div class="full-width-value" style="min-height: 40px;">${createCharacterBoxes("", 80)}</div>
+            <div class="full-width-value" style="min-height: 40px;">${createCharacterBoxes("", 30)}</div>
           </div>
 
           <div class="office-use-section">
@@ -1049,7 +1076,7 @@ const PageList_EmployeeMasterContainer = () => {
             <div class="two-column-section">
               <div class="form-row">
                 <div class="form-label">Date Of Joining:</div>
-                <div class="form-value">${createDateBoxes("", 10)}</div>
+                <div class="form-value">${createDateBoxes("", 8)}</div>
               </div>
               <div class="form-row">
                 <div class="form-label">Salary:</div>
@@ -1058,7 +1085,7 @@ const PageList_EmployeeMasterContainer = () => {
             </div>
             <div class="form-row">
               <div class="form-label">Dept./Designation:</div>
-              <div class="form-value">${createCharacterBoxes("", 30)}</div>
+              <div class="form-value">${createCharacterBoxes("", 25)}</div>
             </div>
           </div>
 

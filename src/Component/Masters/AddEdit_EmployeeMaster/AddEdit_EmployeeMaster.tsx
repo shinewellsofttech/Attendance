@@ -30,6 +30,7 @@ interface FormValues {
   WifeDateOfBirth: string;
   DateOfJoining: string;
   Gender: string;
+  BloodGroup: string;
   MobileNo: string;
   Address: string;
   F_WorkingStatusMaster: number | string;
@@ -135,7 +136,7 @@ const AddEdit_EmployeeMasterContainer = () => {
       if (!form) return;
 
       // Define field order for each tab
-      const tab1Fields = ["EmployeeCode", "Name", "FatherName", "MotherName", "WifeName", "Status", "MachineEnrollmentNo", "DateOfBirth", "FatherDateOfBirth", "MotherDateOfBirth", "WifeDateOfBirth", "DateOfJoining", "Gender", "MobileNo", "Address", "F_WorkingStatusMaster", "F_ShiftMaster", "Region", "EmployeeType", "LocalAddress", "LocalReference"];
+      const tab1Fields = ["EmployeeCode", "Name", "FatherName", "MotherName", "WifeName", "Status", "MachineEnrollmentNo", "DateOfBirth", "FatherDateOfBirth", "MotherDateOfBirth", "WifeDateOfBirth", "DateOfJoining", "Gender", "BloodGroup", "MobileNo", "Address", "F_WorkingStatusMaster", "F_ShiftMaster", "Region", "EmployeeType", "LocalAddress", "LocalReference"];
       const tab2Fields = ["InTime", "OutTime", "MinWorkingHoursFullDay", "MaxWorkingHoursHalfDay", "MinWorkingHoursHalfDay", "GracePeriodMinsOverTime", "WeeklyHoliday", "MaxAllowedLeavesPerMonth"];
       const tab3Fields = ["F_Department", "F_Designation", "SalaryAmount", "WorkingExperience", "SkillType", "EmploymentNature"];
       const tab4Fields = ["EmployeeESICNo", "EmployeePFNo", "ESICIPNo", "UANNo", "AadharNumber", "PANNumber", "BankName", "BankACNo", "BankACHolderName", "IFCSCode"];
@@ -298,6 +299,7 @@ const AddEdit_EmployeeMasterContainer = () => {
     DateOfBirth: Yup.string().required("Date of Birth is required"),
     DateOfJoining: Yup.string().required("Date of Joining is required"),
     Gender: Yup.string().required("Gender is required"),
+    BloodGroup: Yup.string(),
     MobileNo: Yup.string().required("Mobile No. is required"),
     Address: Yup.string().required("Address is required"),
     F_WorkingStatusMaster: Yup.number().nullable().required("Working Status is required"),
@@ -354,6 +356,7 @@ const AddEdit_EmployeeMasterContainer = () => {
     vformData.append("Age", values.Age);
     vformData.append("DateOfJoining", formatDateForAPI(values.DateOfJoining));
     vformData.append("Gender", values.Gender);
+    vformData.append("BloodGroup", values.BloodGroup || "");
     vformData.append("MobileNo", values.MobileNo);
     vformData.append("Address", values.Address);
     vformData.append("F_WorkingStatusMaster", values.F_WorkingStatusMaster ? String(values.F_WorkingStatusMaster) : "");
@@ -490,6 +493,7 @@ const AddEdit_EmployeeMasterContainer = () => {
     WifeDateOfBirth: formatDateForInput(state.formData?.WifeDateOfBirth || state.formData?.WifesDateOfBirth || ""),
     DateOfJoining: formatDateForInput(state.formData?.DateOfJoining || ""),
     Gender: state.formData?.Gender || "",
+    BloodGroup: state.formData?.BloodGroup || "",
     MobileNo: state.formData?.MobileNo || "",
     Address: state.formData?.Address || "",
     F_WorkingStatusMaster: state.formData?.F_WorkingStatusMaster || state.formData?.WorkingStatusId || "",
@@ -939,6 +943,34 @@ const AddEdit_EmployeeMasterContainer = () => {
                                   <option value="Other">Other</option>
                                 </Input>
                                 <ErrorMessage name="Gender" component="div" className="text-danger small" />
+                              </FormGroup>
+                            </Col>
+                            <Col md="6">
+                              <FormGroup>
+                                <Label>
+                                  Blood Group
+                                </Label>
+                                <Input
+                                  type="select"
+                                  name="BloodGroup"
+                                  value={values.BloodGroup}
+                                  onChange={handleChange}
+                                  onBlur={handleBlur}
+                                  onKeyDown={(e) => handleKeyDown(e, "BloodGroup")}
+                                  className="btn-square"
+                                  invalid={touched.BloodGroup && !!errors.BloodGroup}
+                                >
+                                  <option value="">Select</option>
+                                  <option value="A+">A+</option>
+                                  <option value="A-">A-</option>
+                                  <option value="B+">B+</option>
+                                  <option value="B-">B-</option>
+                                  <option value="AB+">AB+</option>
+                                  <option value="AB-">AB-</option>
+                                  <option value="O+">O+</option>
+                                  <option value="O-">O-</option>
+                                </Input>
+                                <ErrorMessage name="BloodGroup" component="div" className="text-danger small" />
                               </FormGroup>
                             </Col>
                             <Col md="6">

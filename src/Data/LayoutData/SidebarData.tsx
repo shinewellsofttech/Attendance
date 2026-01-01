@@ -26,6 +26,7 @@ export const getMenuList = (): MenuItem[] => {
     {
       title: "Attendance management",
       // Items: [{ id: 1, title: "Task Management", path: `${process.env.PUBLIC_URL}/taskManagement`, icon: "Paper-plus", type: "link", bookmark: true }],
+      Items: [{ id: 1, title: "Import From Text", path: `${process.env.PUBLIC_URL}/importFromText`, icon: "Building", type: "link", bookmark: true }],
       
     },
     {
