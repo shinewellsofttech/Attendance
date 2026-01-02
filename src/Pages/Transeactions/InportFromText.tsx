@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import { Card, CardBody, Col, Container, Input, Label, Row, Table } from "reactstrap";
 import { Btn } from "../../AbstractElements";
 import Breadcrumbs from "../../CommonElements/Breadcrumbs/Breadcrumbs";
 import CardHeaderCommon from "../../CommonElements/CardHeaderCommon/CardHeaderCommon";
+import { Fn_FillListData } from "../../store/Functions";
 import { API_WEB_URLS } from "../../constants/constAPI";
 
 interface Attendance {
@@ -16,12 +18,31 @@ interface Attendance {
 }
 
 const API_URL_IMPORT_FROM_TEXT = `${API_WEB_URLS.MASTER}/0/token/ImportFromText`;
+const API_URL_MACHINE_MASTER = `${API_WEB_URLS.MASTER}/0/token/MachineMaster/Id/0`;
 
 const AttendanceImport: React.FC = () => {
   const [data, setData] = useState<Attendance[]>([]);
   const [filteredData, setFilteredData] = useState<Attendance[]>([]);
   const [filters, setFilters] = useState<string[]>(["", "", "", "", "", "", ""]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [machineArray, setMachineArray] = useState<any[]>([]);
+  const [selectedMachine, setSelectedMachine] = useState<string>("");
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    // Load Machine data for dropdown
+    loadMachineData();
+  }, []);
+
+  const loadMachineData = async () => {
+    try {
+      const data = await Fn_FillListData(dispatch, setMachineArray, "gridData", API_URL_MACHINE_MASTER);
+      console.log("Machine data loaded:", data);
+    } catch (error) {
+      console.error("Error loading machine data:", error);
+    }
+  };
 
   // File Upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,15 +81,22 @@ const AttendanceImport: React.FC = () => {
 
     setData(temp);
     setFilteredData(temp);
-
-    sendToServer(temp);
   };
 
   // API Call
-  const sendToServer = async (arr: Attendance[]) => {
+  const sendToServer = async () => {
+    if (!selectedMachine) {
+      alert("Please select a machine");
+      return;
+    }
+    if (data.length === 0) {
+      alert("No data to import. Please upload a file first.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const transformed = arr.map((item) => ({
+      const transformed = data.map((item) => ({
         EmpNo: item.enNo,
         Name: item.name,
         PunchTime: item.dateTime,
@@ -76,6 +104,7 @@ const AttendanceImport: React.FC = () => {
 
       const formData = new FormData();
       formData.append("Data", JSON.stringify(transformed));
+      formData.append("F_MachineMaster", selectedMachine);
 
       const response = await fetch(`${API_WEB_URLS.BASE}${API_URL_IMPORT_FROM_TEXT}`, {
         method: "POST",
@@ -84,6 +113,10 @@ const AttendanceImport: React.FC = () => {
 
       if (response.ok) {
         alert("Data imported successfully!");
+        // Clear data after successful import
+        setData([]);
+        setFilteredData([]);
+        setFilters(["", "", "", "", "", "", ""]);
       } else {
         alert("Error importing data. Please try again.");
       }
@@ -93,6 +126,10 @@ const AttendanceImport: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMachineChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedMachine(e.target.value);
   };
 
   // Search Handling
@@ -130,9 +167,24 @@ const AttendanceImport: React.FC = () => {
                 tagClass="card-title mb-0"
               />
               <CardBody>
-                {/* File Upload */}
+                {/* Input Fields */}
                 <Row className="mb-3">
-                  <Col md="6">
+                  <Col md="4">
+                    <Label>Machine</Label>
+                    <Input
+                      type="select"
+                      value={selectedMachine}
+                      onChange={handleMachineChange}
+                    >
+                      <option value="">Select Machine</option>
+                      {machineArray.map((machine: any) => (
+                        <option key={machine.Id} value={machine.Id}>
+                          {machine.Name || `Machine ${machine.Id}`}
+                        </option>
+                      ))}
+                    </Input>
+                  </Col>
+                  <Col md="4">
                     <Label>Select TXT File</Label>
                     <Input
                       type="file"
@@ -140,6 +192,15 @@ const AttendanceImport: React.FC = () => {
                       onChange={handleFileChange}
                       disabled={loading}
                     />
+                  </Col>
+                  <Col md="4" className="d-flex align-items-end">
+                    <Btn
+                      color="primary"
+                      onClick={sendToServer}
+                      disabled={loading || !selectedMachine || data.length === 0}
+                    >
+                      {loading ? "Saving..." : "Save"}
+                    </Btn>
                   </Col>
                 </Row>
 

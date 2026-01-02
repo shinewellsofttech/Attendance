@@ -35,8 +35,8 @@ interface FormValues {
   Address: string;
   F_WorkingStatusMaster: number | string;
   F_ShiftMaster: number | string;
-  Region: string;
-  EmployeeType: string; // Permanent/Contract
+  Religion: string;
+  F_EmployeeType: number | string;
   // Tab 2 Fields - Working Hours & Settings
   InTime: string;
   OutTime: string;
@@ -71,13 +71,13 @@ interface FormValues {
   LocalReference: string;
   FamilyMembers: Array<{
     Name: string;
-    Relation: string;
+    F_RelationType: number | string;
     DateOfBirth: string;
     Aadhar: string;
   }>;
   Nominees: Array<{
     Name: string;
-    Relation: string;
+    F_RelationType: number | string;
     DateOfBirth: string;
     SharePercentage: string;
   }>;
@@ -88,10 +88,8 @@ interface FormValues {
     Gender: string;
   }>;
   Qualification: string;
-  F_DocumentType1: number | string;
-  F_DocumentType2: number | string;
-  DocumentNumber1: string;
-  DocumentNumber2: string;
+  DocumentNo1: string;
+  DocumentNo2: string;
 }
 
 const API_URL_SAVE = "EmployeeMaster/0/token";
@@ -101,6 +99,8 @@ const API_URL_WORKING_STATUS = API_WEB_URLS.MASTER + "/0/token/WorkingStatusMast
 const API_URL_DOCUMENT_TYPE = API_WEB_URLS.MASTER + "/0/token/DocumentTypeMaster/Id/0";
 const API_URL_DEPARTMENT = API_WEB_URLS.MASTER + "/0/token/DepartmentMaster/Id/0";
 const API_URL_DESIGNATION = API_WEB_URLS.MASTER + "/0/token/DesignationMaster/Id/0";
+const API_URL_RELATION_TYPE = API_WEB_URLS.MASTER + "/0/token/RelationType/Id/0";
+const API_URL_EMPLOYEE_TYPE = API_WEB_URLS.MASTER + "/0/token/EmployeeType/Id/0";
 
 const AddEdit_EmployeeMasterContainer = () => {
   const [activeTab, setActiveTab] = useState("1");
@@ -113,13 +113,15 @@ const AddEdit_EmployeeMasterContainer = () => {
     DocumentTypeArray: [] as any[],
     DepartmentArray: [] as any[],
     DesignationArray: [] as any[],
+    RelationTypeArray: [] as any[],
+    EmployeeTypeArray: [] as any[],
     formData: {} as any,
     OtherDataScore: [],
     isProgress: true,
   });
   const [files, setFiles] = useState({
-    DocumentId1: null as File | null,
-    DocumentId2: null as File | null,
+    Document1: null as File | null,
+    Document2: null as File | null,
     EmployeePhoto: null as File | null,
     EmployeeSignature: null as File | null,
   });
@@ -136,12 +138,12 @@ const AddEdit_EmployeeMasterContainer = () => {
       if (!form) return;
 
       // Define field order for each tab
-      const tab1Fields = ["EmployeeCode", "Name", "FatherName", "MotherName", "WifeName", "Status", "MachineEnrollmentNo", "DateOfBirth", "FatherDateOfBirth", "MotherDateOfBirth", "WifeDateOfBirth", "DateOfJoining", "Gender", "BloodGroup", "MobileNo", "Address", "F_WorkingStatusMaster", "F_ShiftMaster", "Region", "EmployeeType", "LocalAddress", "LocalReference"];
+      const tab1Fields = ["EmployeeCode", "Name", "FatherName", "MotherName", "WifeName", "Status", "MachineEnrollmentNo", "DateOfBirth", "FatherDateOfBirth", "MotherDateOfBirth", "WifeDateOfBirth", "DateOfJoining", "Gender", "BloodGroup", "MobileNo", "Address", "F_WorkingStatusMaster", "F_ShiftMaster", "Religion", "F_EmployeeType", "LocalAddress", "LocalReference"];
       const tab2Fields = ["InTime", "OutTime", "MinWorkingHoursFullDay", "MaxWorkingHoursHalfDay", "MinWorkingHoursHalfDay", "GracePeriodMinsOverTime", "WeeklyHoliday", "MaxAllowedLeavesPerMonth"];
       const tab3Fields = ["F_Department", "F_Designation", "SalaryAmount", "WorkingExperience", "SkillType", "EmploymentNature"];
       const tab4Fields = ["EmployeeESICNo", "EmployeePFNo", "ESICIPNo", "UANNo", "AadharNumber", "PANNumber", "BankName", "BankACNo", "BankACHolderName", "IFCSCode"];
       const tab5Fields: string[] = []; // Grid fields handled separately
-      const tab6Fields = ["Qualification", "F_DocumentType1", "DocumentNumber1", "F_DocumentType2", "DocumentNumber2"];
+      const tab6Fields = ["Qualification", "DocumentNo1", "DocumentNo2"];
       
       let fieldOrder: string[] = [];
       if (activeTab === "1") fieldOrder = tab1Fields;
@@ -187,12 +189,14 @@ const AddEdit_EmployeeMasterContainer = () => {
   };
 
   useEffect(() => {
-    // Load Shift, WorkingStatus, DocumentType, Department, and Designation data for dropdowns
+    // Load Shift, WorkingStatus, DocumentType, Department, Designation, RelationType, and EmployeeType data for dropdowns
     Fn_FillListData(dispatch, setState, "ShiftArray", API_URL_SHIFT);
     Fn_FillListData(dispatch, setState, "WorkingStatusArray", API_URL_WORKING_STATUS);
     Fn_FillListData(dispatch, setState, "DocumentTypeArray", API_URL_DOCUMENT_TYPE);
     Fn_FillListData(dispatch, setState, "DepartmentArray", API_URL_DEPARTMENT);
     Fn_FillListData(dispatch, setState, "DesignationArray", API_URL_DESIGNATION);
+    Fn_FillListData(dispatch, setState, "RelationTypeArray", API_URL_RELATION_TYPE);
+    Fn_FillListData(dispatch, setState, "EmployeeTypeArray", API_URL_EMPLOYEE_TYPE);
 
     const Id = (location.state && (location.state as any).Id) || 0;
 
@@ -305,8 +309,8 @@ const AddEdit_EmployeeMasterContainer = () => {
     F_WorkingStatusMaster: Yup.number().nullable().required("Working Status is required"),
     F_ShiftMaster: Yup.number().nullable().required("Shift is required"),
     Status: Yup.string(),
-    Region: Yup.string(),
-    EmployeeType: Yup.string(),
+    Religion: Yup.string(),
+    F_EmployeeType: Yup.number().nullable(),
     MotherName: Yup.string(),
     WifeName: Yup.string(),
     FatherDateOfBirth: Yup.string(),
@@ -344,45 +348,55 @@ const AddEdit_EmployeeMasterContainer = () => {
   const handleSubmit = (values: FormValues) => {
     let vformData = new FormData();
 
-    // Tab 1 fields - Personal Information
-    vformData.append("EmployeeCode", values.EmployeeCode || "");
-    vformData.append("Name", values.Name);
-    vformData.append("FatherName", values.FatherName);
+    // Helper function to convert string to number
+    const toNumber = (value: string | number | undefined, defaultValue: number = 0): number => {
+      if (value === undefined || value === null || value === "") return defaultValue;
+      if (typeof value === "number") return value;
+      const num = parseFloat(String(value));
+      return isNaN(num) ? defaultValue : num;
+    };
+
+    // Parameters in API specification order
+    vformData.append("Name", values.Name || "");
+    vformData.append("EmployeeNo", values.EmployeeCode || "");
+    vformData.append("F_EmployeeType", String(toNumber(values.F_EmployeeType, 0)));
+    vformData.append("FatherName", values.FatherName || "");
     vformData.append("MotherName", values.MotherName || "");
     vformData.append("WifeName", values.WifeName || "");
     vformData.append("Status", values.Status || "");
-    vformData.append("MachineEnrollmentNo", values.MachineEnrollmentNo);
-    vformData.append("DateOfBirth", formatDateForAPI(values.DateOfBirth));
-    vformData.append("Age", values.Age);
-    vformData.append("DateOfJoining", formatDateForAPI(values.DateOfJoining));
-    vformData.append("Gender", values.Gender);
-    vformData.append("BloodGroup", values.BloodGroup || "");
-    vformData.append("MobileNo", values.MobileNo);
-    vformData.append("Address", values.Address);
-    vformData.append("F_WorkingStatusMaster", values.F_WorkingStatusMaster ? String(values.F_WorkingStatusMaster) : "");
-    vformData.append("F_ShiftMaster", values.F_ShiftMaster ? String(values.F_ShiftMaster) : "");
-    vformData.append("Region", values.Region || "");
-    vformData.append("EmployeeType", values.EmployeeType || "");
+    vformData.append("MachineEnrollmentNo", values.MachineEnrollmentNo || "");
+    vformData.append("DateOfBirth", formatDateForAPI(values.DateOfBirth) || "");
+    vformData.append("Age", String(toNumber(values.Age, 0)));
     vformData.append("FatherDateOfBirth", values.FatherDateOfBirth ? formatDateForAPI(values.FatherDateOfBirth) : "");
     vformData.append("MotherDateOfBirth", values.MotherDateOfBirth ? formatDateForAPI(values.MotherDateOfBirth) : "");
     vformData.append("WifeDateOfBirth", values.WifeDateOfBirth ? formatDateForAPI(values.WifeDateOfBirth) : "");
+    vformData.append("DateOfJoining", formatDateForAPI(values.DateOfJoining) || "");
+    vformData.append("Gender", values.Gender || "");
+    vformData.append("Religion", values.Religion || "");
+    vformData.append("BloodGroup", values.BloodGroup || "");
+    vformData.append("MobileNo", values.MobileNo || "");
+    vformData.append("Address", values.Address || "");
+    vformData.append("LocalAddress", values.LocalAddress || "");
+    vformData.append("LocalReference", values.LocalReference || "");
+    vformData.append("F_WorkingStatusMaster", String(toNumber(values.F_WorkingStatusMaster, 0)));
+    vformData.append("F_ShiftMaster", String(toNumber(values.F_ShiftMaster, 0)));
 
     // Tab 2 fields - Working Hours & Settings
-    vformData.append("InTime", formatTimeForAPI(values.InTime));
-    vformData.append("OutTime", formatTimeForAPI(values.OutTime));
-    vformData.append("MaxWorkingHoursFullDay", String(convertHoursToMinutes(values.MaxWorkingHoursFullDay)));
-    vformData.append("MinWorkingHoursFullDay", String(convertHoursToMinutes(values.MinWorkingHoursFullDay)));
-    vformData.append("MaxWorkingHoursHalfDay", String(convertHoursToMinutes(values.MaxWorkingHoursHalfDay)));
-    vformData.append("MinWorkingHoursHalfDay", String(convertHoursToMinutes(values.MinWorkingHoursHalfDay)));
+    vformData.append("InTime", formatTimeForAPI(values.InTime) || "");
+    vformData.append("OutTime", formatTimeForAPI(values.OutTime) || "");
+    vformData.append("MaxWorkingHoursFullDay", String(toNumber(values.MaxWorkingHoursFullDay, 0)));
+    vformData.append("MinWorkingHoursFullDay", String(toNumber(values.MinWorkingHoursFullDay, 0)));
+    vformData.append("MaxWorkingHoursHalfDay", String(toNumber(values.MaxWorkingHoursHalfDay, 0)));
+    vformData.append("MinWorkingHoursHalfDay", String(toNumber(values.MinWorkingHoursHalfDay, 0)));
     vformData.append("OverTimeApplicable", values.OverTimeApplicable ? "true" : "false");
-    vformData.append("GracePeriodMinsOverTime", values.GracePeriodMinsOverTime);
-    vformData.append("WeeklyHoliday", values.WeeklyHoliday);
-    vformData.append("MaxAllowedLeavesPerMonth", values.MaxAllowedLeavesPerMonth);
+    vformData.append("GracePeriodMinsOverTime", String(toNumber(values.GracePeriodMinsOverTime, 0)));
+    vformData.append("WeeklyHoliday", values.WeeklyHoliday || "");
+    vformData.append("MaxAllowedLeavesPerMonth", String(toNumber(values.MaxAllowedLeavesPerMonth, 0)));
 
     // Tab 3 fields - Employment Details
-    vformData.append("F_Department", values.F_Department ? String(values.F_Department) : "");
-    vformData.append("F_Designation", values.F_Designation ? String(values.F_Designation) : "");
-    vformData.append("SalaryAmount", values.SalaryAmount || "");
+    vformData.append("F_Department", String(toNumber(values.F_Department, 0)));
+    vformData.append("F_Designation", String(toNumber(values.F_Designation, 0)));
+    vformData.append("SalaryAmount", String(toNumber(values.SalaryAmount, 0)));
     vformData.append("WorkingExperience", values.WorkingExperience || "");
     vformData.append("SkillType", values.SkillType || "");
     vformData.append("EmploymentNature", values.EmploymentNature || "");
@@ -399,48 +413,60 @@ const AddEdit_EmployeeMasterContainer = () => {
     vformData.append("BankACHolderName", values.BankACHolderName || "");
     vformData.append("IFCSCode", values.IFCSCode || "");
 
-    // Tab 1 fields - Address & References (merged)
-    vformData.append("LocalAddress", values.LocalAddress || "");
-    vformData.append("LocalReference", values.LocalReference || "");
-
-    // Tab 5 fields - Family & Nominee Details
-    if (values.FamilyMembers && values.FamilyMembers.length > 0) {
-      values.FamilyMembers.forEach((member, index) => {
-        vformData.append(`FamilyMember${index + 1}Name`, member.Name || "");
-        vformData.append(`FamilyMember${index + 1}Relation`, member.Relation || "");
-        vformData.append(`FamilyMember${index + 1}DateOfBirth`, member.DateOfBirth ? formatDateForAPI(member.DateOfBirth) : "");
-        vformData.append(`FamilyMember${index + 1}Aadhar`, member.Aadhar || "");
-      });
-    }
-    if (values.Nominees && values.Nominees.length > 0) {
-      values.Nominees.forEach((nominee, index) => {
-        vformData.append(`Nominee${index + 1}Name`, nominee.Name || "");
-        vformData.append(`Nominee${index + 1}Relation`, nominee.Relation || "");
-        vformData.append(`Nominee${index + 1}DateOfBirth`, nominee.DateOfBirth ? formatDateForAPI(nominee.DateOfBirth) : "");
-        vformData.append(`Nominee${index + 1}SharePercentage`, nominee.SharePercentage || "");
-      });
-    }
-
     // Tab 6 fields - Qualification & Documents
-    if (values.Children && values.Children.length > 0) {
-      values.Children.forEach((child, index) => {
-        vformData.append(`Child${index + 1}Name`, child.Name || "");
-        vformData.append(`Child${index + 1}DateOfBirth`, child.DateOfBirth ? formatDateForAPI(child.DateOfBirth) : "");
-        vformData.append(`Child${index + 1}Gender`, child.Gender || "");
-      });
-    }
     vformData.append("Qualification", values.Qualification || "");
-    vformData.append("F_DocumentType1", values.F_DocumentType1 ? String(values.F_DocumentType1) : "");
-    vformData.append("F_DocumentType2", values.F_DocumentType2 ? String(values.F_DocumentType2) : "");
-    vformData.append("DocumentNumber1", values.DocumentNumber1 || "");
-    vformData.append("DocumentNumber2", values.DocumentNumber2 || "");
-    
-    // File uploads
-    if (files.DocumentId1) {
-      vformData.append("DocumentId1", files.DocumentId1);
+    vformData.append("DocumentNo1", values.DocumentNo1 || "");
+    vformData.append("DocumentNo2", values.DocumentNo2 || "");
+
+    // Tab 5 fields - Family & Nominee Details (Send as JSON strings)
+    if (values.FamilyMembers && values.FamilyMembers.length > 0) {
+      const familyMembersArray = values.FamilyMembers
+        .filter(member => member.Name && member.F_RelationType)
+        .map(member => ({
+          Name: member.Name || "",
+          F_RelationType: toNumber(member.F_RelationType, 0),
+          DOB: member.DateOfBirth ? formatDateForAPI(member.DateOfBirth) : "",
+          AadharNo: member.Aadhar || ""
+        }));
+      vformData.append("FamilyJson", JSON.stringify(familyMembersArray));
+    } else {
+      vformData.append("FamilyJson", JSON.stringify([]));
     }
-    if (files.DocumentId2) {
-      vformData.append("DocumentId2", files.DocumentId2);
+
+    if (values.Nominees && values.Nominees.length > 0) {
+      const nomineesArray = values.Nominees
+        .filter(nominee => nominee.Name && nominee.F_RelationType)
+        .map(nominee => ({
+          Name: nominee.Name || "",
+          F_RelationType: toNumber(nominee.F_RelationType, 0),
+          DOB: nominee.DateOfBirth ? formatDateForAPI(nominee.DateOfBirth) : "",
+          SharePercent: toNumber(nominee.SharePercentage, 0)
+        }));
+      vformData.append("NomineeJson", JSON.stringify(nomineesArray));
+    } else {
+      vformData.append("NomineeJson", JSON.stringify([]));
+    }
+
+    // Tab 6 fields - Children (Send as JSON string)
+    if (values.Children && values.Children.length > 0) {
+      const childrenArray = values.Children
+        .filter(child => child.Name)
+        .map(child => ({
+          ChildName: child.Name || "",
+          DateOfBirth: child.DateOfBirth ? formatDateForAPI(child.DateOfBirth) : "",
+          Gender: child.Gender || ""
+        }));
+      vformData.append("ChildJson", JSON.stringify(childrenArray));
+    } else {
+      vformData.append("ChildJson", JSON.stringify([]));
+    }
+    
+    // File uploads (binary fields)
+    if (files.Document1) {
+      vformData.append("Document1", files.Document1);
+    }
+    if (files.Document2) {
+      vformData.append("Document2", files.Document2);
     }
     if (files.EmployeePhoto) {
       vformData.append("EmployeePhoto", files.EmployeePhoto);
@@ -477,37 +503,51 @@ const AddEdit_EmployeeMasterContainer = () => {
 
   // Use utility function for date formatting
 
+  // Helper function to parse JSON strings safely
+  const parseJsonSafely = (jsonString: string | null | undefined, defaultValue: any[] = []): any[] => {
+    if (!jsonString || typeof jsonString !== "string") return defaultValue;
+    try {
+      const parsed = JSON.parse(jsonString);
+      return Array.isArray(parsed) ? parsed : defaultValue;
+    } catch (e) {
+      console.error("Error parsing JSON:", e);
+      return defaultValue;
+    }
+  };
+
   const initialValues: FormValues = {
     // Tab 1 - Personal Information
-    EmployeeCode: state.formData?.EmployeeCode || "",
+    EmployeeCode: state.formData?.EmployeeCode || state.formData?.EmployeeNo || "",
     Name: state.formData?.Name || "",
     FatherName: state.formData?.FatherName || "",
-    MotherName: state.formData?.MotherName || state.formData?.MothersName || "",
-    WifeName: state.formData?.WifeName || state.formData?.WifesName || "",
+    MotherName: state.formData?.MotherName || "",
+    WifeName: state.formData?.WifeName || "",
     Status: state.formData?.Status || "",
     MachineEnrollmentNo: state.formData?.MachineEnrollmentNo || "",
     DateOfBirth: formatDateForInput(state.formData?.DateOfBirth || ""),
-    Age: state.formData?.Age || calculateAge(formatDateForInput(state.formData?.DateOfBirth || "")),
-    FatherDateOfBirth: formatDateForInput(state.formData?.FatherDateOfBirth || state.formData?.FathersDateOfBirth || ""),
-    MotherDateOfBirth: formatDateForInput(state.formData?.MotherDateOfBirth || state.formData?.MothersDateOfBirth || ""),
-    WifeDateOfBirth: formatDateForInput(state.formData?.WifeDateOfBirth || state.formData?.WifesDateOfBirth || ""),
+    Age: state.formData?.Age ? String(state.formData.Age) : calculateAge(formatDateForInput(state.formData?.DateOfBirth || "")),
+    FatherDateOfBirth: formatDateForInput(state.formData?.FatherDateOfBirth || ""),
+    MotherDateOfBirth: formatDateForInput(state.formData?.MotherDateOfBirth || ""),
+    WifeDateOfBirth: formatDateForInput(state.formData?.WifeDateOfBirth || ""),
     DateOfJoining: formatDateForInput(state.formData?.DateOfJoining || ""),
     Gender: state.formData?.Gender || "",
     BloodGroup: state.formData?.BloodGroup || "",
     MobileNo: state.formData?.MobileNo || "",
     Address: state.formData?.Address || "",
-    F_WorkingStatusMaster: state.formData?.F_WorkingStatusMaster || state.formData?.WorkingStatusId || "",
-    F_ShiftMaster: state.formData?.F_ShiftMaster || state.formData?.SelectShift || "",
-    Region: state.formData?.Region || "",
-    EmployeeType: state.formData?.EmployeeType || "",
+    F_WorkingStatusMaster: state.formData?.F_WorkingStatusMaster ? Number(state.formData.F_WorkingStatusMaster) : "",
+    F_ShiftMaster: state.formData?.F_ShiftMaster ? Number(state.formData.F_ShiftMaster) : "",
+    Religion: state.formData?.Religion || "",
+    F_EmployeeType: state.formData?.F_EmployeeType ? Number(state.formData.F_EmployeeType) : "",
     // Tab 2 - Working Hours & Settings
     InTime: (() => {
       const time = state.formData?.InTime;
       if (!time) return "";
       const timeStr = typeof time === "string" ? time : String(time);
       if (isRailwayTime) {
+        // Railway time: return in 24-hour format
         return timeStr.includes("AM") || timeStr.includes("PM") ? convertTo24Hour(timeStr) : timeStr;
       } else {
+        // 12-hour format: convert if needed
         return timeStr.includes("AM") || timeStr.includes("PM") ? timeStr : convertTo12Hour(timeStr);
       }
     })(),
@@ -516,23 +556,40 @@ const AddEdit_EmployeeMasterContainer = () => {
       if (!time) return "";
       const timeStr = typeof time === "string" ? time : String(time);
       if (isRailwayTime) {
+        // Railway time: return in 24-hour format
         return timeStr.includes("AM") || timeStr.includes("PM") ? convertTo24Hour(timeStr) : timeStr;
       } else {
+        // 12-hour format: convert if needed
         return timeStr.includes("AM") || timeStr.includes("PM") ? timeStr : convertTo12Hour(timeStr);
       }
     })(),
-    MaxWorkingHoursFullDay: state.formData?.MaxWorkingHoursFullDay ? convertMinutesToHours(state.formData.MaxWorkingHoursFullDay) : "",
-    MinWorkingHoursFullDay: state.formData?.MinWorkingHoursFullDay ? convertMinutesToHours(state.formData.MinWorkingHoursFullDay) : "",
-    MaxWorkingHoursHalfDay: state.formData?.MaxWorkingHoursHalfDay ? convertMinutesToHours(state.formData.MaxWorkingHoursHalfDay) : "",
-    MinWorkingHoursHalfDay: state.formData?.MinWorkingHoursHalfDay ? convertMinutesToHours(state.formData.MinWorkingHoursHalfDay) : "",
-    OverTimeApplicable: state.formData?.OverTimeApplicable || false,
-    GracePeriodMinsOverTime: state.formData?.GracePeriodMinsOverTime || "",
+    // Working hours come as numbers (already in hours, not minutes)
+    MaxWorkingHoursFullDay: state.formData?.MaxWorkingHoursFullDay !== undefined && state.formData?.MaxWorkingHoursFullDay !== null 
+      ? String(state.formData.MaxWorkingHoursFullDay) 
+      : "",
+    MinWorkingHoursFullDay: state.formData?.MinWorkingHoursFullDay !== undefined && state.formData?.MinWorkingHoursFullDay !== null
+      ? String(state.formData.MinWorkingHoursFullDay)
+      : "",
+    MaxWorkingHoursHalfDay: state.formData?.MaxWorkingHoursHalfDay !== undefined && state.formData?.MaxWorkingHoursHalfDay !== null
+      ? String(state.formData.MaxWorkingHoursHalfDay)
+      : "",
+    MinWorkingHoursHalfDay: state.formData?.MinWorkingHoursHalfDay !== undefined && state.formData?.MinWorkingHoursHalfDay !== null
+      ? String(state.formData.MinWorkingHoursHalfDay)
+      : "",
+    OverTimeApplicable: state.formData?.OverTimeApplicable === true || state.formData?.OverTimeApplicable === "true" || false,
+    GracePeriodMinsOverTime: state.formData?.GracePeriodMinsOverTime !== undefined && state.formData?.GracePeriodMinsOverTime !== null
+      ? String(state.formData.GracePeriodMinsOverTime)
+      : "",
     WeeklyHoliday: state.formData?.WeeklyHoliday || "Sunday",
-    MaxAllowedLeavesPerMonth: state.formData?.MaxAllowedLeavesPerMonth || "",
+    MaxAllowedLeavesPerMonth: state.formData?.MaxAllowedLeavesPerMonth !== undefined && state.formData?.MaxAllowedLeavesPerMonth !== null
+      ? String(state.formData.MaxAllowedLeavesPerMonth)
+      : "",
     // Tab 3 - Employment Details
-    F_Department: state.formData?.F_Department || state.formData?.DepartmentId || "",
-    F_Designation: state.formData?.F_Designation || state.formData?.DesignationId || "",
-    SalaryAmount: state.formData?.SalaryAmount || "",
+    F_Department: state.formData?.F_Department ? Number(state.formData.F_Department) : "",
+    F_Designation: state.formData?.F_Designation ? Number(state.formData.F_Designation) : "",
+    SalaryAmount: state.formData?.SalaryAmount !== undefined && state.formData?.SalaryAmount !== null
+      ? String(state.formData.SalaryAmount)
+      : "",
     WorkingExperience: state.formData?.WorkingExperience || "",
     SkillType: state.formData?.SkillType || "",
     EmploymentNature: state.formData?.EmploymentNature || "",
@@ -550,36 +607,51 @@ const AddEdit_EmployeeMasterContainer = () => {
     // Tab 1 - Address & References (merged)
     LocalAddress: state.formData?.LocalAddress || "",
     LocalReference: state.formData?.LocalReference || "",
-    // Tab 5 - Family & Nominee Details
-    FamilyMembers: state.formData?.FamilyMembers && Array.isArray(state.formData.FamilyMembers) && state.formData.FamilyMembers.length > 0
-      ? state.formData.FamilyMembers.map((member: any) => ({
+    // Tab 5 - Family & Nominee Details (Parse from JSON strings)
+    FamilyMembers: (() => {
+      const familyJson = state.formData?.FamilyJson;
+      const parsed = parseJsonSafely(familyJson);
+      if (parsed.length > 0) {
+        return parsed.map((member: any) => ({
           Name: member.Name || "",
-          Relation: member.Relation || "",
-          DateOfBirth: formatDateForInput(member.DateOfBirth || ""),
-          Aadhar: member.Aadhar || "",
-        }))
-      : [{ Name: "", Relation: "", DateOfBirth: "", Aadhar: "" }],
-    Nominees: state.formData?.Nominees && Array.isArray(state.formData.Nominees) && state.formData.Nominees.length > 0
-      ? state.formData.Nominees.map((nominee: any) => ({
+          F_RelationType: member.F_RelationType ? Number(member.F_RelationType) : "",
+          DateOfBirth: formatDateForInput(member.DOB || member.DateOfBirth || ""),
+          Aadhar: member.AadharNo || member.Aadhar || "",
+        }));
+      }
+      return [{ Name: "", F_RelationType: "", DateOfBirth: "", Aadhar: "" }];
+    })(),
+    Nominees: (() => {
+      const nomineeJson = state.formData?.NomineeJson;
+      const parsed = parseJsonSafely(nomineeJson);
+      if (parsed.length > 0) {
+        return parsed.map((nominee: any) => ({
           Name: nominee.Name || "",
-          Relation: nominee.Relation || "",
-          DateOfBirth: formatDateForInput(nominee.DateOfBirth || ""),
-          SharePercentage: nominee.SharePercentage || "",
-        }))
-      : [{ Name: "", Relation: "", DateOfBirth: "", SharePercentage: "" }],
-    // Tab 6 - Qualification & Documents
-    Children: state.formData?.Children && Array.isArray(state.formData.Children) && state.formData.Children.length > 0
-      ? state.formData.Children.map((child: any) => ({
-          Name: child.Name || "",
+          F_RelationType: nominee.F_RelationType ? Number(nominee.F_RelationType) : "",
+          DateOfBirth: formatDateForInput(nominee.DOB || nominee.DateOfBirth || ""),
+          SharePercentage: nominee.SharePercent !== undefined && nominee.SharePercent !== null
+            ? String(nominee.SharePercent)
+            : "",
+        }));
+      }
+      return [{ Name: "", F_RelationType: "", DateOfBirth: "", SharePercentage: "" }];
+    })(),
+    // Tab 6 - Qualification & Documents (Parse from JSON string)
+    Children: (() => {
+      const childJson = state.formData?.ChildJson;
+      const parsed = parseJsonSafely(childJson);
+      if (parsed.length > 0) {
+        return parsed.map((child: any) => ({
+          Name: child.ChildName || child.Name || "",
           DateOfBirth: formatDateForInput(child.DateOfBirth || ""),
           Gender: child.Gender || "",
-        }))
-      : [{ Name: "", DateOfBirth: "", Gender: "" }],
+        }));
+      }
+      return [{ Name: "", DateOfBirth: "", Gender: "" }];
+    })(),
     Qualification: state.formData?.Qualification || "",
-    F_DocumentType1: state.formData?.F_DocumentType1 || state.formData?.Document1TypeId || "",
-    F_DocumentType2: state.formData?.F_DocumentType2 || state.formData?.Document2TypeId || "",
-    DocumentNumber1: state.formData?.DocumentNumber1 || "",
-    DocumentNumber2: state.formData?.DocumentNumber2 || "",
+    DocumentNo1: state.formData?.DocumentNo1 || "",
+    DocumentNo2: state.formData?.DocumentNo2 || "",
   };
 
   const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -940,7 +1012,7 @@ const AddEdit_EmployeeMasterContainer = () => {
                                   <option value="">Select</option>
                                   <option value="Male">Male</option>
                                   <option value="Female">Female</option>
-                                  <option value="Other">Other</option>
+                                  {/* <option value="Other">Other</option> */}
                                 </Input>
                                 <ErrorMessage name="Gender" component="div" className="text-danger small" />
                               </FormGroup>
@@ -1063,19 +1135,19 @@ const AddEdit_EmployeeMasterContainer = () => {
                             <Col md="6">
                               <FormGroup>
                                 <Label>
-                                  Region
+                                  Religion
                                 </Label>
                                 <Input
                                   type="text"
-                                  name="Region"
-                                  placeholder="Enter Region"
-                                  value={values.Region}
+                                  name="Religion"
+                                  placeholder="Enter Religion"
+                                  value={values.Religion}
                                   onChange={handleChange}
                                   onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "Region")}
-                                  invalid={touched.Region && !!errors.Region}
+                                  onKeyDown={(e) => handleKeyDown(e, "Religion")}
+                                  invalid={touched.Religion && !!errors.Religion}
                                 />
-                                <ErrorMessage name="Region" component="div" className="text-danger small" />
+                                <ErrorMessage name="Religion" component="div" className="text-danger small" />
                               </FormGroup>
                             </Col>
                             <Col md="6">
@@ -1085,19 +1157,22 @@ const AddEdit_EmployeeMasterContainer = () => {
                                 </Label>
                                 <Input
                                   type="select"
-                                  name="EmployeeType"
-                                  value={values.EmployeeType}
+                                  name="F_EmployeeType"
+                                  value={values.F_EmployeeType}
                                   onChange={handleChange}
                                   onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "EmployeeType")}
+                                  onKeyDown={(e) => handleKeyDown(e, "F_EmployeeType")}
                                   className="btn-square"
-                                  invalid={touched.EmployeeType && !!errors.EmployeeType}
+                                  invalid={touched.F_EmployeeType && !!errors.F_EmployeeType}
                                 >
-                                  <option value="">Select</option>
-                                  <option value="Permanent">Permanent</option>
-                                  <option value="Contract">Contract</option>
+                                  <option value="">Select Employee Type</option>
+                                  {state.EmployeeTypeArray.map((item: any) => (
+                                    <option key={item.Id} value={item.Id}>
+                                      {item.Name || `Employee Type ${item.Id}`}
+                                    </option>
+                                  ))}
                                 </Input>
-                                <ErrorMessage name="EmployeeType" component="div" className="text-danger small" />
+                                <ErrorMessage name="F_EmployeeType" component="div" className="text-danger small" />
                               </FormGroup>
                             </Col>
                             <Col md="12">
@@ -1799,16 +1874,23 @@ const AddEdit_EmployeeMasterContainer = () => {
                                         </td>
                                         <td>
                                           <Input
-                                            type="text"
-                                            placeholder="Enter Relation"
-                                            value={member.Relation}
+                                            type="select"
+                                            value={member.F_RelationType}
                                             onChange={(e) => {
                                               const newMembers = [...values.FamilyMembers];
-                                              newMembers[index].Relation = e.target.value;
+                                              newMembers[index].F_RelationType = e.target.value;
                                               setFieldValue("FamilyMembers", newMembers);
                                             }}
                                             onBlur={handleBlur}
-                                          />
+                                            className="btn-square"
+                                          >
+                                            <option value="">Select Relation</option>
+                                            {state.RelationTypeArray.map((item: any) => (
+                                              <option key={item.Id} value={item.Id}>
+                                                {item.Name || `Relation ${item.Id}`}
+                                              </option>
+                                            ))}
+                                          </Input>
                                         </td>
                                         <td>
                                           <Input
@@ -1844,7 +1926,7 @@ const AddEdit_EmployeeMasterContainer = () => {
                                               size="sm"
                                               type="button"
                                               onClick={() => {
-                                                const newMembers = [...values.FamilyMembers, { Name: "", Relation: "", DateOfBirth: "", Aadhar: "" }];
+                                                const newMembers = [...values.FamilyMembers, { Name: "", F_RelationType: "", DateOfBirth: "", Aadhar: "" }];
                                                 setFieldValue("FamilyMembers", newMembers);
                                               }}
                                             >
@@ -1908,16 +1990,23 @@ const AddEdit_EmployeeMasterContainer = () => {
                                         </td>
                                         <td>
                                           <Input
-                                            type="text"
-                                            placeholder="Enter Relation"
-                                            value={nominee.Relation}
+                                            type="select"
+                                            value={nominee.F_RelationType}
                                             onChange={(e) => {
                                               const newNominees = [...values.Nominees];
-                                              newNominees[index].Relation = e.target.value;
+                                              newNominees[index].F_RelationType = e.target.value;
                                               setFieldValue("Nominees", newNominees);
                                             }}
                                             onBlur={handleBlur}
-                                          />
+                                            className="btn-square"
+                                          >
+                                            <option value="">Select Relation</option>
+                                            {state.RelationTypeArray.map((item: any) => (
+                                              <option key={item.Id} value={item.Id}>
+                                                {item.Name || `Relation ${item.Id}`}
+                                              </option>
+                                            ))}
+                                          </Input>
                                         </td>
                                         <td>
                                           <Input
@@ -1955,7 +2044,7 @@ const AddEdit_EmployeeMasterContainer = () => {
                                               size="sm"
                                               type="button"
                                               onClick={() => {
-                                                const newNominees = [...values.Nominees, { Name: "", Relation: "", DateOfBirth: "", SharePercentage: "" }];
+                                                const newNominees = [...values.Nominees, { Name: "", F_RelationType: "", DateOfBirth: "", SharePercentage: "" }];
                                                 setFieldValue("Nominees", newNominees);
                                               }}
                                             >
@@ -1982,12 +2071,7 @@ const AddEdit_EmployeeMasterContainer = () => {
                                 </table>
                               </div>
                             </Col>
-                          </Row>
-                        </TabPane>
 
-                        {/* Tab 6: Qualification & Documents */}
-                        <TabPane tabId="6">
-                          <Row className="mt-3">
                             {/* Child Details Section */}
                             <Col xs="12" className="mt-4">
                               <div style={{ backgroundColor: "#f8f9fa", padding: "10px", borderRadius: "5px", marginBottom: "15px" }}>
@@ -2086,7 +2170,12 @@ const AddEdit_EmployeeMasterContainer = () => {
                                 </table>
                               </div>
                             </Col>
+                          </Row>
+                        </TabPane>
 
+                        {/* Tab 6: Qualification & Documents */}
+                        <TabPane tabId="6">
+                          <Row className="mt-3">
                             {/* Qualification Section */}
                             <Col xs="12" className="mt-4">
                               <h6 className="mb-3" style={{ backgroundColor: "#f8f9fa", padding: "10px", borderRadius: "5px" }}>
@@ -2115,119 +2204,73 @@ const AddEdit_EmployeeMasterContainer = () => {
                               </h6>
                             </Col>
                             
-                            {/* Document ID 1 */}
-                            <Col md="4">
+                            {/* Aadhar Card */}
+                            <Col md="6">
                               <FormGroup>
-                                <Label>Document Type 1</Label>
-                                <Input
-                                  type="select"
-                                  name="F_DocumentType1"
-                                  value={values.F_DocumentType1}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "F_DocumentType1")}
-                                  className="btn-square"
-                                  invalid={touched.F_DocumentType1 && !!errors.F_DocumentType1}
-                                >
-                                  <option value="">Select Document Type</option>
-                                  {state.DocumentTypeArray.map((item: any) => (
-                                    <option key={item.Id} value={item.Id}>
-                                      {item.Name || `Document Type ${item.Id}`}
-                                    </option>
-                                  ))}
-                                </Input>
-                                <ErrorMessage name="F_DocumentType1" component="div" className="text-danger small" />
-                              </FormGroup>
-                            </Col>
-                            <Col md="4">
-                              <FormGroup>
-                                <Label>Document Number 1</Label>
+                                <Label>Aadhar Card</Label>
                                 <Input
                                   type="text"
-                                  name="DocumentNumber1"
-                                  placeholder="Enter Document Number"
-                                  value={values.DocumentNumber1}
+                                  name="DocumentNo1"
+                                  placeholder="Enter Aadhar Card Number"
+                                  value={values.DocumentNo1}
                                   onChange={handleChange}
                                   onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "DocumentNumber1")}
-                                  invalid={touched.DocumentNumber1 && !!errors.DocumentNumber1}
+                                  onKeyDown={(e) => handleKeyDown(e, "DocumentNo1")}
+                                  invalid={touched.DocumentNo1 && !!errors.DocumentNo1}
                                 />
-                                <ErrorMessage name="DocumentNumber1" component="div" className="text-danger small" />
+                                <ErrorMessage name="DocumentNo1" component="div" className="text-danger small" />
                               </FormGroup>
                             </Col>
-                            <Col md="4">
+                            <Col md="6">
                               <FormGroup>
-                                <Label>DocumentId 1</Label>
+                                <Label>Aadhar Card Image</Label>
                                 <Input
                                   type="file"
                                   accept="image/*,.pdf"
                                   onChange={(e) => {
                                     const file = e.target.files?.[0] || null;
-                                    setFiles((prev) => ({ ...prev, DocumentId1: file }));
+                                    setFiles((prev) => ({ ...prev, Document1: file }));
                                   }}
                                 />
-                                {files.DocumentId1 && (
+                                {files.Document1 && (
                                   <small className="text-muted d-block mt-1">
-                                    Selected: {files.DocumentId1.name}
+                                    Selected: {files.Document1.name}
                                   </small>
                                 )}
                               </FormGroup>
                             </Col>
 
-                            {/* Document ID 2 */}
-                            <Col md="4">
+                            {/* PAN Card */}
+                            <Col md="6">
                               <FormGroup>
-                                <Label>Document Type 2</Label>
-                                <Input
-                                  type="select"
-                                  name="F_DocumentType2"
-                                  value={values.F_DocumentType2}
-                                  onChange={handleChange}
-                                  onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "F_DocumentType2")}
-                                  className="btn-square"
-                                  invalid={touched.F_DocumentType2 && !!errors.F_DocumentType2}
-                                >
-                                  <option value="">Select Document Type</option>
-                                  {state.DocumentTypeArray.map((item: any) => (
-                                    <option key={item.Id} value={item.Id}>
-                                      {item.Name || `Document Type ${item.Id}`}
-                                    </option>
-                                  ))}
-                                </Input>
-                                <ErrorMessage name="F_DocumentType2" component="div" className="text-danger small" />
-                              </FormGroup>
-                            </Col>
-                            <Col md="4">
-                              <FormGroup>
-                                <Label>Document Number 2</Label>
+                                <Label>PAN Card</Label>
                                 <Input
                                   type="text"
-                                  name="DocumentNumber2"
-                                  placeholder="Enter Document Number"
-                                  value={values.DocumentNumber2}
+                                  name="DocumentNo2"
+                                  placeholder="Enter PAN Card Number"
+                                  value={values.DocumentNo2}
                                   onChange={handleChange}
                                   onBlur={handleBlur}
-                                  onKeyDown={(e) => handleKeyDown(e, "DocumentNumber2")}
-                                  invalid={touched.DocumentNumber2 && !!errors.DocumentNumber2}
+                                  onKeyDown={(e) => handleKeyDown(e, "DocumentNo2")}
+                                  invalid={touched.DocumentNo2 && !!errors.DocumentNo2}
                                 />
-                                <ErrorMessage name="DocumentNumber2" component="div" className="text-danger small" />
+                                <ErrorMessage name="DocumentNo2" component="div" className="text-danger small" />
                               </FormGroup>
                             </Col>
-                            <Col md="4">
+                            <Col md="6">
                               <FormGroup>
-                                <Label>DocumentId 2</Label>
+                                <Label>PAN Card Image</Label>
                                 <Input
                                   type="file"
                                   accept="image/*,.pdf"
                                   onChange={(e) => {
                                     const file = e.target.files?.[0] || null;
-                                    setFiles((prev) => ({ ...prev, DocumentId2: file }));
+                                    setFiles((prev) => ({ ...prev, Document2: file }));
                                   }}
                                 />
-                                {files.DocumentId2 && (
+                                {files.Document2 && (
                                   <small className="text-muted d-block mt-1">
-                                    Selected: {files.DocumentId2.name}
+                                    Selected: {files.Document2.name}
                                   </small>
                                 )}
                               </FormGroup>
@@ -2284,14 +2327,17 @@ const AddEdit_EmployeeMasterContainer = () => {
                         Cancel
                       </Btn>
                       {activeTab === "6" ? (
+                        // Save button - Only on last tab, submits all tabs data at once
                         <Btn color="primary" type="submit">
                           {isEditMode ? "Update" : "Save"}
                         </Btn>
                       ) : (
+                        // Next button - Only navigates to next tab, does NOT save data
                         <Btn
                           color="primary"
                           type="button"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.preventDefault(); // Prevent any form submission
                             if (activeTab === "1") {
                               setActiveTab("2");
                             } else if (activeTab === "2") {

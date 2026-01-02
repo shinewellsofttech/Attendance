@@ -28,6 +28,7 @@ import PageList_DesignationMaster from "../Pages/Masters/PageList_DesignationMas
 import PageListEmployeeReport from "../Pages/Reports/PageListEmployeeReport";
 import EmployeeReportDetail from "../Pages/Reports/EmployeeReport";
 import AttendanceImport from "../Pages/Transeactions/InportFromText";
+import AuditAttendance from "../Pages/Transeactions/AuditAttendance";
 
 // Helper function to normalize paths
 const normalizePath = (path: string): string => {
@@ -70,4 +71,5 @@ export const routes = [
   { path: normalizePath("/pageListEmployeeReport"), Component: <PageListEmployeeReport /> },
   { path: normalizePath("/employeeReport"), Component: <EmployeeReportDetail /> },
   { path: normalizePath("/importFromText"), Component: <AttendanceImport /> },
+  { path: normalizePath("/auditAttendance"), Component: <AuditAttendance /> },
 ];

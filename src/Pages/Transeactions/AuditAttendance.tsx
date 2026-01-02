@@ -44,7 +44,7 @@ const AuditAttendanceContainer = () => {
     setFromDate(formatDateForInput(firstDay.toISOString().split('T')[0]));
     setToDate(formatDateForInput(lastDay.toISOString().split('T')[0]));
   }, []);
-
+ 
   
   const loadEmployeeData = async () => {
     try {
