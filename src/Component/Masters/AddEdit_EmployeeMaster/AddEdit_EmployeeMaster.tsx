@@ -450,13 +450,29 @@ const AddEdit_EmployeeMasterContainer = () => {
     // Tab 6 fields - Children (Send as JSON string)
     if (values.Children && values.Children.length > 0) {
       const childrenArray = values.Children
-        .filter(child => child.Name)
-        .map(child => ({
-          ChildName: child.Name || "",
-          DateOfBirth: child.DateOfBirth ? formatDateForAPI(child.DateOfBirth) : "",
-          Gender: child.Gender || ""
-        }));
-      vformData.append("ChildJson", JSON.stringify(childrenArray));
+        .filter(child => child.Name && child.Name.trim() !== "")
+        .map(child => {
+          // Convert Gender to "Male" or "Female" for API
+          let genderValue = "";
+          if (child.Gender === "M" || child.Gender === "Male") {
+            genderValue = "Male";
+          } else if (child.Gender === "F" || child.Gender === "Female") {
+            genderValue = "Female";
+          }
+          
+          return {
+            ChildName: child.Name || "",
+            DateOfBirth: child.DateOfBirth ? formatDateForAPI(child.DateOfBirth) : "",
+            Gender: genderValue
+          };
+        });
+      
+      // Only append if there are valid children
+      if (childrenArray.length > 0) {
+        vformData.append("ChildJson", JSON.stringify(childrenArray));
+      } else {
+        vformData.append("ChildJson", JSON.stringify([]));
+      }
     } else {
       vformData.append("ChildJson", JSON.stringify([]));
     }
@@ -641,11 +657,18 @@ const AddEdit_EmployeeMasterContainer = () => {
       const childJson = state.formData?.ChildJson;
       const parsed = parseJsonSafely(childJson);
       if (parsed.length > 0) {
-        return parsed.map((child: any) => ({
-          Name: child.ChildName || child.Name || "",
-          DateOfBirth: formatDateForInput(child.DateOfBirth || ""),
-          Gender: child.Gender || "",
-        }));
+        return parsed.map((child: any) => {
+          // Convert Gender from "Male"/"Female" to "M"/"F" for form dropdown
+          let genderValue = child.Gender || "";
+          if (genderValue === "Male") genderValue = "M";
+          else if (genderValue === "Female") genderValue = "F";
+          
+          return {
+            Name: child.ChildName || child.Name || "",
+            DateOfBirth: formatDateForInput(child.DateOfBirth || ""),
+            Gender: genderValue,
+          };
+        });
       }
       return [{ Name: "", DateOfBirth: "", Gender: "" }];
     })(),
@@ -2098,11 +2121,11 @@ const AddEdit_EmployeeMasterContainer = () => {
                                             placeholder="Enter Name"
                                             value={child.Name}
                                             onChange={(e) => {
-                                              const newChildren = [...values.Children];
-                                              newChildren[index].Name = e.target.value;
+                                              const newChildren = values.Children.map((c, i) => 
+                                                i === index ? { ...c, Name: e.target.value } : c
+                                              );
                                               setFieldValue("Children", newChildren);
                                             }}
-                                            onBlur={handleBlur}
                                           />
                                         </td>
                                         <td style={{ width: "150px" }}>
@@ -2110,11 +2133,11 @@ const AddEdit_EmployeeMasterContainer = () => {
                                             type="date"
                                             value={child.DateOfBirth}
                                             onChange={(e) => {
-                                              const newChildren = [...values.Children];
-                                              newChildren[index].DateOfBirth = e.target.value;
+                                              const newChildren = values.Children.map((c, i) => 
+                                                i === index ? { ...c, DateOfBirth: e.target.value } : c
+                                              );
                                               setFieldValue("Children", newChildren);
                                             }}
-                                            onBlur={handleBlur}
                                             style={{ width: "100%" }}
                                           />
                                         </td>
@@ -2123,11 +2146,11 @@ const AddEdit_EmployeeMasterContainer = () => {
                                             type="select"
                                             value={child.Gender}
                                             onChange={(e) => {
-                                              const newChildren = [...values.Children];
-                                              newChildren[index].Gender = e.target.value;
+                                              const newChildren = values.Children.map((c, i) => 
+                                                i === index ? { ...c, Gender: e.target.value } : c
+                                              );
                                               setFieldValue("Children", newChildren);
                                             }}
-                                            onBlur={handleBlur}
                                             className="btn-square"
                                             style={{ width: "100%" }}
                                           >

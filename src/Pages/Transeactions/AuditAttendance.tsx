@@ -1,16 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { Card, CardBody, Col, Container, Input, Label, Row, Table } from "reactstrap";
 import { Btn } from "../../AbstractElements";
 import Breadcrumbs from "../../CommonElements/Breadcrumbs/Breadcrumbs";
 import CardHeaderCommon from "../../CommonElements/CardHeaderCommon/CardHeaderCommon";
-import { Fn_FillListData } from "../../store/Functions";
+import { Fn_FillListData, Fn_GetReport } from "../../store/Functions";
 import { API_WEB_URLS } from "../../constants/constAPI";
-import { formatDateForDisplay, formatDateForInput } from "../../utils/dateFormatUtils";
+import { formatDateForDisplay, formatDateForInput, formatDateForAPI } from "../../utils/dateFormatUtils";
 
-const API_URL_EMPLOYEE = `${API_WEB_URLS.MASTER}/0/token/EmployeeMaster/Id/0`;
-// TODO: Update with actual Audit Attendance API endpoint
-const API_URL_AUDIT_ATTENDANCE = `${API_WEB_URLS.MASTER}/0/token/AuditAttendance`;  
+const API_URL_EMPLOYEE = `${API_WEB_URLS.MASTER}/0/token/EmployeeMaster/Id/0`;  
+
+// Get Indian Financial Year dates (April 1 to March 31)
+const getCurrentFinancialYearDates = () => {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth(); // 0-indexed (0 = Jan, 3 = Apr)
+
+  // If current month is Jan, Feb, or Mar (0, 1, 2), financial year started in previous year
+  const startYear = currentMonth < 3 ? currentYear - 1 : currentYear;
+  const endYear = startYear + 1;
+
+  const format = (year: number, month: number, day: number) => {
+    const monthString = String(month).padStart(2, "0");
+    const dayString = String(day).padStart(2, "0");
+    return `${year}-${monthString}-${dayString}`;
+  };
+
+  return {
+    fromDate: format(startYear, 4, 1),   // April 1
+    toDate: format(endYear, 3, 31),      // March 31
+  };
+};
 
 interface AttendanceRecord {
   Id: number;
@@ -30,6 +50,12 @@ const AuditAttendanceContainer = () => {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  
+  // State object for Fn_FillListData
+  const [employeeState, setEmployeeState] = useState({
+    EmployeeArray: [] as any[],
+    isProgress: true,
+  });
 
   const dispatch = useDispatch();
 
@@ -37,26 +63,37 @@ const AuditAttendanceContainer = () => {
     // Load Employee data for dropdown
     loadEmployeeData();
     
-    // Set default dates (current month)
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    setFromDate(formatDateForInput(firstDay.toISOString().split('T')[0]));
-    setToDate(formatDateForInput(lastDay.toISOString().split('T')[0]));
+    // Set default dates (Indian Financial Year: April 1 to March 31)
+    const { fromDate: fyFromDate, toDate: fyToDate } = getCurrentFinancialYearDates();
+    setFromDate(formatDateForInput(fyFromDate));
+    setToDate(formatDateForInput(fyToDate));
   }, []);
  
   
   const loadEmployeeData = async () => {
     try {
-      await Fn_FillListData(dispatch, (response: any) => {
-        if (response && response.data && response.data.dataList) {
-          setEmployeeArray(response.data.dataList);
-        }
-      }, "EmployeeArray", API_URL_EMPLOYEE);
+      await Fn_FillListData(dispatch, setEmployeeState, "EmployeeArray", API_URL_EMPLOYEE);
     } catch (error) {
       console.error("Error loading employee data:", error);
     }
   };
+
+  // Update employeeArray when employeeState changes
+  useEffect(() => {
+    if (employeeState.EmployeeArray && employeeState.EmployeeArray.length > 0) {
+      setEmployeeArray(employeeState.EmployeeArray);
+    }
+  }, [employeeState.EmployeeArray]);
+
+  // setState function for Fn_GetReport to update attendanceData
+  const setStateForReport = useCallback((data: any) => {
+    console.log("setStateForReport called with:", data);
+    if (data && Array.isArray(data)) {
+      setAttendanceData(data);
+    } else {
+      setAttendanceData([]);
+    }
+  }, []);
 
   const loadAttendanceData = async () => {
     if (!selectedEmployee) {
@@ -70,18 +107,47 @@ const AuditAttendanceContainer = () => {
 
     setLoading(true);
     try {
-      // TODO: Update with actual API call
-      // const url = `${API_URL_AUDIT_ATTENDANCE}?EmployeeId=${selectedEmployee}&FromDate=${fromDate}&ToDate=${toDate}`;
-      // await Fn_FillListData(dispatch, (response: any) => {
-      //   if (response && response.data && response.data.dataList) {
-      //     setAttendanceData(response.data.dataList);
-      //   }
-      // }, "attendanceData", url);
-      
-      // Mock data for now - remove when API is ready
-      setAttendanceData([]);
+      // Get UserId from localStorage
+      let userId = "0";
+      try {
+        const authUserStr = localStorage.getItem("authUser");
+        if (authUserStr) {
+          const authUser = JSON.parse(authUserStr);
+          userId = authUser?.Id ? String(authUser.Id) : "0";
+        }
+      } catch (error) {
+        console.error("Error parsing authUser from localStorage:", error);
+      }
+
+      // Prepare FormData for request body
+      const formatDate = (date: string) => {
+        const fromDateFormatted = formatDateForAPI(date) || date;
+        return fromDateFormatted;
+      };
+
+      let vformData = new FormData();
+      vformData.append("FromDate", formatDate(fromDate));
+      vformData.append("ToDate", formatDate(toDate));
+      vformData.append("Id", selectedEmployee); // Employee ID
+
+      // Use Fn_GetReport with same pattern as Report_GroupWise.js
+      const response = await Fn_GetReport(
+        dispatch,
+        setStateForReport,
+        "attendanceData",
+        `GetAttendancePunch/${userId}/token`,
+        { arguList: { formData: vformData } },
+        true
+      );
+
+      if (Array.isArray(response)) {
+        setAttendanceData(response);
+      } else {
+        setAttendanceData([]);
+      }
     } catch (error) {
       console.error("Error loading attendance data:", error);
+      setAttendanceData([]);
     } finally {
       setLoading(false);
     }
