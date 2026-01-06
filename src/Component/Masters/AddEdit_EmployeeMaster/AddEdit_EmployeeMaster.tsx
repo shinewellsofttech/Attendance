@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Formik, Form, ErrorMessage } from "formik";
@@ -125,6 +125,20 @@ const AddEdit_EmployeeMasterContainer = () => {
     EmployeePhoto: null as File | null,
     EmployeeSignature: null as File | null,
   });
+  const [existingImages, setExistingImages] = useState({
+    Document1: "" as string,
+    Document2: "" as string,
+    EmployeePhoto: "" as string,
+    EmployeeSignature: "" as string,
+  });
+  const [previewUrls, setPreviewUrls] = useState({
+    Document1: "" as string,
+    Document2: "" as string,
+    EmployeePhoto: "" as string,
+    EmployeeSignature: "" as string,
+  });
+  const previewUrlsRef = useRef(previewUrls);
+  previewUrlsRef.current = previewUrls;
 
   const dispatch = useDispatch();
   const location = useLocation();
@@ -208,6 +222,69 @@ const AddEdit_EmployeeMasterContainer = () => {
       Fn_DisplayData(dispatch, setState, Id, API_URL_EDIT);
     }
   }, [dispatch, location.state, navigate]);
+
+  // Update existing images when formData is loaded
+  useEffect(() => {
+    if (state.formData && Object.keys(state.formData).length > 0) {
+      setExistingImages({
+        Document1: state.formData.Document1 || "",
+        Document2: state.formData.Document2 || "",
+        EmployeePhoto: state.formData.EmployeePhoto || "",
+        EmployeeSignature: state.formData.EmployeeSignature || "",
+      });
+    }
+  }, [state.formData]);
+
+  // Create and cleanup preview URLs when files change
+  useEffect(() => {
+    // Cleanup old URLs
+    const oldUrls = { ...previewUrlsRef.current };
+    
+    if (files.Document1) {
+      if (oldUrls.Document1) URL.revokeObjectURL(oldUrls.Document1);
+      const url = URL.createObjectURL(files.Document1);
+      setPreviewUrls(prev => ({ ...prev, Document1: url }));
+    } else {
+      if (oldUrls.Document1) URL.revokeObjectURL(oldUrls.Document1);
+      setPreviewUrls(prev => ({ ...prev, Document1: "" }));
+    }
+    
+    if (files.Document2) {
+      if (oldUrls.Document2) URL.revokeObjectURL(oldUrls.Document2);
+      const url = URL.createObjectURL(files.Document2);
+      setPreviewUrls(prev => ({ ...prev, Document2: url }));
+    } else {
+      if (oldUrls.Document2) URL.revokeObjectURL(oldUrls.Document2);
+      setPreviewUrls(prev => ({ ...prev, Document2: "" }));
+    }
+    
+    if (files.EmployeePhoto) {
+      if (oldUrls.EmployeePhoto) URL.revokeObjectURL(oldUrls.EmployeePhoto);
+      const url = URL.createObjectURL(files.EmployeePhoto);
+      setPreviewUrls(prev => ({ ...prev, EmployeePhoto: url }));
+    } else {
+      if (oldUrls.EmployeePhoto) URL.revokeObjectURL(oldUrls.EmployeePhoto);
+      setPreviewUrls(prev => ({ ...prev, EmployeePhoto: "" }));
+    }
+    
+    if (files.EmployeeSignature) {
+      if (oldUrls.EmployeeSignature) URL.revokeObjectURL(oldUrls.EmployeeSignature);
+      const url = URL.createObjectURL(files.EmployeeSignature);
+      setPreviewUrls(prev => ({ ...prev, EmployeeSignature: url }));
+    } else {
+      if (oldUrls.EmployeeSignature) URL.revokeObjectURL(oldUrls.EmployeeSignature);
+      setPreviewUrls(prev => ({ ...prev, EmployeeSignature: "" }));
+    }
+
+    // Cleanup on unmount
+    return () => {
+      const currentUrls = previewUrlsRef.current;
+      if (currentUrls.Document1) URL.revokeObjectURL(currentUrls.Document1);
+      if (currentUrls.Document2) URL.revokeObjectURL(currentUrls.Document2);
+      if (currentUrls.EmployeePhoto) URL.revokeObjectURL(currentUrls.EmployeePhoto);
+      if (currentUrls.EmployeeSignature) URL.revokeObjectURL(currentUrls.EmployeeSignature);
+    };
+  }, [files.Document1, files.Document2, files.EmployeePhoto, files.EmployeeSignature]);
 
   // Auto-focus on first field when form is ready
   useEffect(() => {
@@ -2256,9 +2333,33 @@ const AddEdit_EmployeeMasterContainer = () => {
                                   }}
                                 />
                                 {files.Document1 && (
+                                  <div className="mt-2">
+                                    {files.Document1.type.startsWith("image/") && previewUrls.Document1 ? (
+                                      <img
+                                        src={previewUrls.Document1}
+                                        alt="Aadhar Card Preview"
+                                        style={{ maxWidth: "200px", maxHeight: "200px", objectFit: "contain", border: "1px solid #ddd", borderRadius: "4px", padding: "5px" }}
+                                      />
+                                    ) : null}
                                   <small className="text-muted d-block mt-1">
                                     Selected: {files.Document1.name}
                                   </small>
+                                  </div>
+                                )}
+                                {existingImages.Document1 && !files.Document1 && (
+                                  <div className="mt-2">
+                                    <img
+                                      src={`${API_WEB_URLS.IMAGEURL}${existingImages.Document1}`}
+                                      alt="Aadhar Card"
+                                      style={{ maxWidth: "200px", maxHeight: "200px", objectFit: "contain", border: "1px solid #ddd", borderRadius: "4px", padding: "5px" }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = "none";
+                                      }}
+                                    />
+                                    <small className="text-muted d-block mt-1">
+                                      Current: {existingImages.Document1}
+                                    </small>
+                                  </div>
                                 )}
                               </FormGroup>
                             </Col>
@@ -2292,9 +2393,33 @@ const AddEdit_EmployeeMasterContainer = () => {
                                   }}
                                 />
                                 {files.Document2 && (
+                                  <div className="mt-2">
+                                    {files.Document2.type.startsWith("image/") && previewUrls.Document2 ? (
+                                      <img
+                                        src={previewUrls.Document2}
+                                        alt="PAN Card Preview"
+                                        style={{ maxWidth: "200px", maxHeight: "200px", objectFit: "contain", border: "1px solid #ddd", borderRadius: "4px", padding: "5px" }}
+                                      />
+                                    ) : null}
                                   <small className="text-muted d-block mt-1">
                                     Selected: {files.Document2.name}
                                   </small>
+                                  </div>
+                                )}
+                                {existingImages.Document2 && !files.Document2 && (
+                                  <div className="mt-2">
+                                    <img
+                                      src={`${API_WEB_URLS.IMAGEURL}${existingImages.Document2}`}
+                                      alt="PAN Card"
+                                      style={{ maxWidth: "200px", maxHeight: "200px", objectFit: "contain", border: "1px solid #ddd", borderRadius: "4px", padding: "5px" }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = "none";
+                                      }}
+                                    />
+                                    <small className="text-muted d-block mt-1">
+                                      Current: {existingImages.Document2}
+                                    </small>
+                                  </div>
                                 )}
                               </FormGroup>
                             </Col>
@@ -2312,9 +2437,33 @@ const AddEdit_EmployeeMasterContainer = () => {
                                   }}
                                 />
                                 {files.EmployeePhoto && (
+                                  <div className="mt-2">
+                                    {previewUrls.EmployeePhoto && (
+                                      <img
+                                        src={previewUrls.EmployeePhoto}
+                                        alt="Employee Photo Preview"
+                                        style={{ maxWidth: "200px", maxHeight: "200px", objectFit: "contain", border: "1px solid #ddd", borderRadius: "4px", padding: "5px" }}
+                                      />
+                                    )}
                                   <small className="text-muted d-block mt-1">
                                     Selected: {files.EmployeePhoto.name}
                                   </small>
+                                  </div>
+                                )}
+                                {existingImages.EmployeePhoto && !files.EmployeePhoto && (
+                                  <div className="mt-2">
+                                    <img
+                                      src={`${API_WEB_URLS.IMAGEURL}${existingImages.EmployeePhoto}`}
+                                      alt="Employee Photo"
+                                      style={{ maxWidth: "200px", maxHeight: "200px", objectFit: "contain", border: "1px solid #ddd", borderRadius: "4px", padding: "5px" }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = "none";
+                                      }}
+                                    />
+                                    <small className="text-muted d-block mt-1">
+                                      Current: {existingImages.EmployeePhoto}
+                                    </small>
+                                  </div>
                                 )}
                               </FormGroup>
                             </Col>
@@ -2330,9 +2479,33 @@ const AddEdit_EmployeeMasterContainer = () => {
                                   }}
                                 />
                                 {files.EmployeeSignature && (
+                                  <div className="mt-2">
+                                    {previewUrls.EmployeeSignature && (
+                                      <img
+                                        src={previewUrls.EmployeeSignature}
+                                        alt="Employee Signature Preview"
+                                        style={{ maxWidth: "200px", maxHeight: "200px", objectFit: "contain", border: "1px solid #ddd", borderRadius: "4px", padding: "5px" }}
+                                      />
+                                    )}
                                   <small className="text-muted d-block mt-1">
                                     Selected: {files.EmployeeSignature.name}
                                   </small>
+                                  </div>
+                                )}
+                                {existingImages.EmployeeSignature && !files.EmployeeSignature && (
+                                  <div className="mt-2">
+                                    <img
+                                      src={`${API_WEB_URLS.IMAGEURL}${existingImages.EmployeeSignature}`}
+                                      alt="Employee Signature"
+                                      style={{ maxWidth: "200px", maxHeight: "200px", objectFit: "contain", border: "1px solid #ddd", borderRadius: "4px", padding: "5px" }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = "none";
+                                      }}
+                                    />
+                                    <small className="text-muted d-block mt-1">
+                                      Current: {existingImages.EmployeeSignature}
+                                    </small>
+                                  </div>
                                 )}
                               </FormGroup>
                             </Col>

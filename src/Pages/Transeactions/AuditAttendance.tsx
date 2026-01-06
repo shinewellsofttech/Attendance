@@ -4,9 +4,10 @@ import { Card, CardBody, Col, Container, Input, Label, Row, Table } from "reacts
 import { Btn } from "../../AbstractElements";
 import Breadcrumbs from "../../CommonElements/Breadcrumbs/Breadcrumbs";
 import CardHeaderCommon from "../../CommonElements/CardHeaderCommon/CardHeaderCommon";
-import { Fn_FillListData, Fn_GetReport } from "../../store/Functions";
+import { Fn_FillListData, Fn_GetReport, Fn_AddEditData } from "../../store/Functions";
 import { API_WEB_URLS } from "../../constants/constAPI";
 import { formatDateForDisplay, formatDateForInput, formatDateForAPI } from "../../utils/dateFormatUtils";
+import { convertTo12Hour, convertTo24Hour } from "../../utils/timeFormatUtils";
 
 const API_URL_EMPLOYEE = `${API_WEB_URLS.MASTER}/0/token/EmployeeMaster/Id/0`;  
 
@@ -34,10 +35,20 @@ const getCurrentFinancialYearDates = () => {
 
 interface AttendanceRecord {
   Id: number;
-  Check: string; // Full date and time: "02/Apr/2024 11:40:59 AM"
-  Date: string; // Date only: "02/04/2024"
-  Time: string; // Time only: "11:40"
-  AM_PM: string; // "AM" or "PM"
+  F_EmployeeMaster: number;
+  EmployeeNo: string;
+  EmployeeName: string;
+  PunchDateTime: string; // "2024-05-16T14:02:26"
+  PunchDate: string; // "2024-05-16T00:00:00"
+  PunchTime: string; // "14:02:26"
+  EntryType: number;
+  EntryTypeName: string;
+  F_MachineMaster: number;
+  MachineName: string;
+  MachinePunchId: string;
+  UserId: number;
+  DateOfCreation: string;
+  LastUpdateOn: string;
   [key: string]: any;
 }
 
@@ -50,6 +61,11 @@ const AuditAttendanceContainer = () => {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [newRows, setNewRows] = useState<Array<{
+    date: string;
+    time: string;
+    ampm: string;
+  }>>([]);
   
   // State object for Fn_FillListData
   const [employeeState, setEmployeeState] = useState({
@@ -78,6 +94,8 @@ const AuditAttendanceContainer = () => {
     }
   };
 
+
+
   // Update employeeArray when employeeState changes
   useEffect(() => {
     if (employeeState.EmployeeArray && employeeState.EmployeeArray.length > 0) {
@@ -88,7 +106,12 @@ const AuditAttendanceContainer = () => {
   // setState function for Fn_GetReport to update attendanceData
   const setStateForReport = useCallback((data: any) => {
     console.log("setStateForReport called with:", data);
-    if (data && Array.isArray(data)) {
+    // Handle nested response structure: { success: true, data: { response: [...] } }
+    if (data && data.data && data.data.response && Array.isArray(data.data.response)) {
+      setAttendanceData(data.data.response);
+    } else if (data && data.response && Array.isArray(data.response)) {
+      setAttendanceData(data.response);
+    } else if (data && Array.isArray(data)) {
       setAttendanceData(data);
     } else {
       setAttendanceData([]);
@@ -140,7 +163,12 @@ const AuditAttendanceContainer = () => {
         true
       );
 
-      if (Array.isArray(response)) {
+      // Handle nested response structure: { success: true, data: { response: [...] } }
+      if (response && response.data && response.data.response && Array.isArray(response.data.response)) {
+        setAttendanceData(response.data.response);
+      } else if (response && response.response && Array.isArray(response.response)) {
+        setAttendanceData(response.response);
+      } else if (Array.isArray(response)) {
         setAttendanceData(response);
       } else {
         setAttendanceData([]);
@@ -185,20 +213,140 @@ const AuditAttendanceContainer = () => {
 
   const handleEdit = () => {
     setIsEditMode(true);
+    // Initialize with one new row with current date
+    const today = new Date();
+    setNewRows([{
+      date: formatDateForInput(today.toISOString().split('T')[0]),
+      time: "",
+      ampm: "AM"
+    }]);
   };
 
-  const handleSave = () => {
-    // TODO: Implement save logic
-    const rowsToDelete = Array.from(selectedRows);
-    console.log("Rows to delete:", rowsToDelete);
-    // Call API to delete selected rows
-    setIsEditMode(false);
-    setSelectedRows(new Set());
+  const handleSave = async () => {
+    if (!selectedEmployee) {
+      alert("Please select an employee");
+      return;
+    }
+
+    // Get UserId from localStorage
+    let userId = "0";
+    try {
+      const authUserStr = localStorage.getItem("authUser");
+      if (authUserStr) {
+        const authUser = JSON.parse(authUserStr);
+        userId = authUser?.Id ? String(authUser.Id) : "0";
+      }
+    } catch (error) {
+      console.error("Error parsing authUser from localStorage:", error);
+      alert("Error: Could not get user information");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Handle all new rows - Save each row via API
+      const rowsToAdd = newRows.filter(row => row.date && row.time);
+      
+      if (rowsToAdd.length > 0) {
+        // Save each row individually
+        for (const row of rowsToAdd) {
+          // Convert time to 24-hour format for API
+          const time12 = `${row.time} ${row.ampm}`;
+          const time24 = convertTo24Hour(time12);
+          const dateFormatted = formatDateForAPI(row.date);
+          
+          // Format PunchDateTime as ISO date-time: "2024-05-16T14:02:26"
+          // Add seconds if not present
+          const timeWithSeconds = time24.split(':').length === 2 ? `${time24}:00` : time24;
+          const punchDateTime = `${dateFormatted}T${timeWithSeconds}`;
+          
+          // Prepare FormData for API
+          let vformData = new FormData();
+          vformData.append("F_EmployeeMaster", selectedEmployee);
+          vformData.append("PunchDateTime", punchDateTime);
+          vformData.append("EntryType", "2"); // Set EntryType to 2
+          vformData.append("F_MachineMaster", "0"); // Default value, can be updated if needed
+          vformData.append("MachinePunchId", ""); // Default empty, can be updated if needed
+          vformData.append("UserId", userId);
+          
+          // Call API to save attendance punch
+          const API_URL_SAVE = `AttendancePunch/${userId}/token`;
+          
+          await Fn_AddEditData(
+            dispatch,
+            () => {}, // setState not needed for this
+            { arguList: { id: 0, formData: vformData } },
+            API_URL_SAVE,
+            true, // isMultiPart
+            "memberid",
+            () => {}, // navigate not needed
+            "" // forward not needed
+          );
+        }
+        
+        // Reload attendance data after saving
+        await loadAttendanceData();
+      }
+
+      // TODO: Handle deletion of selected rows
+      const rowsToDelete = Array.from(selectedRows);
+      if (rowsToDelete.length > 0) {
+        console.log("Rows to delete:", rowsToDelete);
+        // TODO: Call API to delete selected rows
+      }
+
+      // Reset edit mode
+      setIsEditMode(false);
+      setSelectedRows(new Set());
+      setNewRows([]);
+      
+      alert(rowsToAdd.length > 0 ? `${rowsToAdd.length} attendance record(s) saved successfully!` : "No new records to save.");
+    } catch (error) {
+      console.error("Error saving attendance data:", error);
+      alert("Error saving attendance data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
     setIsEditMode(false);
     setSelectedRows(new Set());
+    setNewRows([]);
+  };
+
+  // Update a specific new row
+  const updateNewRow = (index: number, field: 'date' | 'time' | 'ampm', value: string) => {
+    setNewRows(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      
+      // If date and time are both filled, add a new empty row below
+      if (field === 'date' || field === 'time') {
+        const currentRow = updated[index];
+        if (currentRow.date && currentRow.time) {
+          // Check if there's already an empty row at the end
+          const lastRow = updated[updated.length - 1];
+          if (!lastRow || (lastRow.date && lastRow.time)) {
+            // Add new empty row
+            const today = new Date();
+            updated.push({
+              date: formatDateForInput(today.toISOString().split('T')[0]),
+              time: "",
+              ampm: "AM"
+            });
+          }
+        }
+      }
+      
+      return updated;
+    });
+  };
+
+  // Remove a new row
+  const removeNewRow = (index: number) => {
+    setNewRows(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleClose = () => {
@@ -206,37 +354,56 @@ const AuditAttendanceContainer = () => {
     window.history.back();
   };
 
-  // Parse Check field to extract Date, Time, and AM/PM
-  const parseCheckField = (checkString: string) => {
-    if (!checkString) return { date: "-", time: "-", ampm: "-" };
-    
+  // Parse PunchDateTime to extract Date, Time, and AM/PM
+  const parsePunchData = (punchDateTime: string, punchDate: string, punchTime: string) => {
     try {
-      // Format: "02/Apr/2024 11:40:59 AM"
-      const parts = checkString.split(" ");
-      if (parts.length >= 3) {
-        const datePart = parts[0]; // "02/Apr/2024"
-        const timePart = parts[1]; // "11:40:59"
-        const ampmPart = parts[2]; // "AM"
-        
-        // Convert date from "02/Apr/2024" to "02/04/2024"
-        const dateObj = new Date(datePart);
-        const formattedDate = formatDateForDisplay(dateObj.toISOString().split('T')[0]);
-        
-        // Extract time without seconds: "11:40:59" -> "11:40"
-        const timeParts = timePart.split(":");
-        const time = `${timeParts[0]}:${timeParts[1]}`;
-        
-        return {
-          date: formattedDate,
-          time: time,
-          ampm: ampmPart
-        };
+      // Format date from "2024-05-16T00:00:00" or "2024-05-16"
+      let formattedDate = "-";
+      if (punchDate) {
+        const dateStr = punchDate.split('T')[0]; // Get date part only
+        formattedDate = formatDateForDisplay(dateStr);
+      } else if (punchDateTime) {
+        const dateStr = punchDateTime.split('T')[0];
+        formattedDate = formatDateForDisplay(dateStr);
       }
+
+      // Format time from "14:02:26" to "02:02 PM"
+      let formattedTime = "-";
+      let ampm = "-";
+      if (punchTime) {
+        // Extract hours and minutes (remove seconds)
+        const timeParts = punchTime.split(":");
+        if (timeParts.length >= 2) {
+          const time24 = `${timeParts[0]}:${timeParts[1]}`;
+          const time12 = convertTo12Hour(time24);
+          const timeParts12 = time12.split(" ");
+          formattedTime = timeParts12[0]; // "02:02"
+          ampm = timeParts12[1] || "-"; // "PM"
+        }
+      } else if (punchDateTime) {
+        // Extract time from PunchDateTime "2024-05-16T14:02:26"
+        const timePart = punchDateTime.split('T')[1];
+        if (timePart) {
+          const timeParts = timePart.split(":");
+          if (timeParts.length >= 2) {
+            const time24 = `${timeParts[0]}:${timeParts[1]}`;
+            const time12 = convertTo12Hour(time24);
+            const timeParts12 = time12.split(" ");
+            formattedTime = timeParts12[0];
+            ampm = timeParts12[1] || "-";
+          }
+        }
+      }
+
+      return {
+        date: formattedDate,
+        time: formattedTime,
+        ampm: ampm
+      };
     } catch (error) {
-      console.error("Error parsing check field:", error);
+      console.error("Error parsing punch data:", error);
+      return { date: "-", time: "-", ampm: "-" };
     }
-    
-    return { date: checkString, time: "-", ampm: "-" };
   };
 
   return (
@@ -301,41 +468,153 @@ const AuditAttendanceContainer = () => {
                     <thead>
                       <tr>
                         <th>S.</th>
-                        <th>Check</th>
+                        <th>Punch DateTime</th>
                         <th>Date</th>
                         <th>Time</th>
                         <th>AM/PM</th>
+                        <th>Entry Type</th>
+                        <th>Machine</th>
                         <th>Del</th>
                       </tr>
                     </thead>
                     <tbody>
                       {attendanceData.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="text-center p-4">
+                          <td colSpan={8} className="text-center p-4">
                             {loading ? "Loading..." : "No data found. Please select employee and date range, then click Load Data."}
                           </td>
                         </tr>
                       ) : (
-                        attendanceData.map((item: AttendanceRecord, index: number) => {
-                          const parsed = parseCheckField(item.Check || item.check || "");
-                          return (
-                            <tr key={item.Id || index}>
-                              <td>{index + 1}</td>
-                              <td>{item.Check || item.check || "-"}</td>
-                              <td>{parsed.date}</td>
-                              <td>{parsed.time}</td>
-                              <td>{parsed.ampm}</td>
+                        <>
+                          {attendanceData.map((item: AttendanceRecord, index: number) => {
+                            const parsed = parsePunchData(
+                              item.PunchDateTime || "",
+                              item.PunchDate || "",
+                              item.PunchTime || ""
+                            );
+                            
+                            // Format PunchDateTime for display
+                            let punchDateTimeDisplay = "-";
+                            if (item.PunchDateTime) {
+                              try {
+                                const datePart = item.PunchDateTime.split('T')[0];
+                                const timePart = item.PunchDateTime.split('T')[1]?.split('.')[0] || item.PunchTime || "";
+                                const formattedDate = formatDateForDisplay(datePart);
+                                punchDateTimeDisplay = `${formattedDate} ${timePart}`;
+                              } catch (e) {
+                                punchDateTimeDisplay = item.PunchDateTime;
+                              }
+                            }
+                            
+                            return (
+                              <tr key={item.Id || index}>
+                                <td>{index + 1}</td>
+                                <td>{punchDateTimeDisplay}</td>
+                                <td>{parsed.date}</td>
+                                <td>{parsed.time}</td>
+                                <td>{parsed.ampm}</td>
+                                <td>{item.EntryTypeName || "-"}</td>
+                                <td>{item.MachineName || "-"}</td>
+                                <td>
+                                  <Input
+                                    type="checkbox"
+                                    checked={selectedRows.has(item.Id)}
+                                    onChange={() => handleRowCheckboxChange(item.Id)}
+                                    disabled={!isEditMode}
+                                  />
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {/* New Rows for adding attendance */}
+                          {isEditMode && newRows.map((row, rowIndex) => (
+                            <tr key={`new-row-${rowIndex}`} style={{ backgroundColor: "#f0f8ff" }}>
+                              <td>{attendanceData.length + rowIndex + 1}</td>
+                              <td>-</td>
                               <td>
                                 <Input
-                                  type="checkbox"
-                                  checked={selectedRows.has(item.Id)}
-                                  onChange={() => handleRowCheckboxChange(item.Id)}
-                                  disabled={!isEditMode}
+                                  type="date"
+                                  value={row.date}
+                                  onChange={(e) => updateNewRow(rowIndex, 'date', e.target.value)}
+                                  style={{ width: "100%", minWidth: "150px" }}
                                 />
                               </td>
+                              <td>
+                                <Input
+                                  type="text"
+                                  placeholder="HH:MM"
+                                  value={row.time}
+                                  onChange={(e) => {
+                                    let value = e.target.value;
+                                    // Allow only numbers and colon
+                                    value = value.replace(/[^0-9:]/g, '');
+                                    // Format as HH:MM
+                                    if (value.length === 2 && !value.includes(':')) {
+                                      value = value + ':';
+                                    } else if (value.length > 5) {
+                                      value = value.substring(0, 5);
+                                    }
+                                    updateNewRow(rowIndex, 'time', value);
+                                  }}
+                                  onBlur={(e) => {
+                                    // Validate and format time
+                                    const timeValue = e.target.value;
+                                    if (timeValue && timeValue.includes(':')) {
+                                      const parts = timeValue.split(':');
+                                      if (parts.length === 2) {
+                                        let hours = parseInt(parts[0]) || 0;
+                                        let minutes = parseInt(parts[1]) || 0;
+                                        
+                                        // Validate hours (0-12 for 12-hour format)
+                                        if (hours > 12) {
+                                          hours = 12;
+                                        } else if (hours < 0) {
+                                          hours = 0;
+                                        }
+                                        
+                                        // Validate minutes (0-59)
+                                        if (minutes > 59) {
+                                          minutes = 59;
+                                        } else if (minutes < 0) {
+                                          minutes = 0;
+                                        }
+                                        
+                                        const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+                                        updateNewRow(rowIndex, 'time', formattedTime);
+                                      }
+                                    }
+                                  }}
+                                  style={{ width: "100%", minWidth: "80px" }}
+                                />
+                              </td>
+                              <td>
+                                <Input
+                                  type="select"
+                                  value={row.ampm}
+                                  onChange={(e) => updateNewRow(rowIndex, 'ampm', e.target.value)}
+                                  style={{ width: "100%", minWidth: "70px" }}
+                                >
+                                  <option value="AM">AM</option>
+                                  <option value="PM">PM</option>
+                                </Input>
+                              </td>
+                              <td>-</td>
+                              <td>-</td>
+                              <td>
+                                {newRows.length > 1 && (
+                                  <Btn
+                                    color="danger"
+                                    size="sm"
+                                    type="button"
+                                    onClick={() => removeNewRow(rowIndex)}
+                                  >
+                                    <i className="fa fa-times"></i>
+                                  </Btn>
+                                )}
+                              </td>
                             </tr>
-                          );
-                        })
+                          ))}
+                        </>
                       )}
                     </tbody>
                   </Table>
@@ -356,7 +635,7 @@ const AuditAttendanceContainer = () => {
                       color="success"
                       className="me-2"
                       onClick={handleSave}
-                      disabled={!isEditMode || selectedRows.size === 0}
+                      disabled={!isEditMode || (selectedRows.size === 0 && newRows.filter(row => row.date && row.time).length === 0)}
                     >
                       Save
                     </Btn>

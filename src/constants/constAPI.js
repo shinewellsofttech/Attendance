@@ -8,7 +8,7 @@ export const API_WEB_URLS = {
   LOGIN: "AdminLogin/0/token",
   //IMAGEURL: "https://localhost:44362/MemberImages/",
   // IMAGEURL: "http://192.168.31.70:7037/MemberImages/",
-  IMAGEURL: "https://apiDemotask.shinewellsofttech.co.in/MemberImages/",
+  IMAGEURL: "http://192.168.31.151:5000/MemberImages/",
   // IMAGEURL: "http://192.168.1.46:7037/MemberImages/",
   IMAGEURL_PDF:
     "https://apikreditbeast.shinewellsofttech.co.in/MemberImages/PDF/",

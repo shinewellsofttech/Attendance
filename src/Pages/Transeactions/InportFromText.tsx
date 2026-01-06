@@ -17,7 +17,7 @@ interface Attendance {
   dateTime: string;
 }
 
-const API_URL_IMPORT_FROM_TEXT = `${API_WEB_URLS.MASTER}/0/token/ImportFromText`;
+const API_URL_IMPORT_FROM_TEXT = `ImportFromText/0/token`;
 const API_URL_MACHINE_MASTER = `${API_WEB_URLS.MASTER}/0/token/MachineMaster/Id/0`;
 
 const AttendanceImport: React.FC = () => {
@@ -55,6 +55,8 @@ const AttendanceImport: React.FC = () => {
     };
     reader.readAsText(file);
   };
+
+
 
   // TXT Parsing Logic
   const parseTxt = (text: string) => {
