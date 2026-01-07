@@ -94,8 +94,6 @@ const AuditAttendanceContainer = () => {
     }
   };
 
-
-
   // Update employeeArray when employeeState changes
   useEffect(() => {
     if (employeeState.EmployeeArray && employeeState.EmployeeArray.length > 0) {
@@ -469,9 +467,9 @@ const AuditAttendanceContainer = () => {
                       <tr>
                         <th>S.</th>
                         <th>Punch DateTime</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>AM/PM</th>
+                        <th style={{ width: "120px" }}>Date</th>
+                        <th style={{ width: "80px" }}>Time</th>
+                        <th style={{ width: "70px" }}>AM/PM</th>
                         <th>Entry Type</th>
                         <th>Machine</th>
                         <th>Del</th>
@@ -510,19 +508,12 @@ const AuditAttendanceContainer = () => {
                               <tr key={item.Id || index}>
                                 <td>{index + 1}</td>
                                 <td>{punchDateTimeDisplay}</td>
-                                <td>{parsed.date}</td>
-                                <td>{parsed.time}</td>
-                                <td>{parsed.ampm}</td>
+                                <td style={{ width: "120px" }}>{parsed.date}</td>
+                                <td style={{ width: "80px" }}>{parsed.time}</td>
+                                <td style={{ width: "70px" }}>{parsed.ampm}</td>
                                 <td>{item.EntryTypeName || "-"}</td>
                                 <td>{item.MachineName || "-"}</td>
-                                <td>
-                                  <Input
-                                    type="checkbox"
-                                    checked={selectedRows.has(item.Id)}
-                                    onChange={() => handleRowCheckboxChange(item.Id)}
-                                    disabled={!isEditMode}
-                                  />
-                                </td>
+                                <td>-</td>
                               </tr>
                             );
                           })}
@@ -531,15 +522,15 @@ const AuditAttendanceContainer = () => {
                             <tr key={`new-row-${rowIndex}`} style={{ backgroundColor: "#f0f8ff" }}>
                               <td>{attendanceData.length + rowIndex + 1}</td>
                               <td>-</td>
-                              <td>
+                              <td style={{ width: "120px" }}>
                                 <Input
                                   type="date"
                                   value={row.date}
                                   onChange={(e) => updateNewRow(rowIndex, 'date', e.target.value)}
-                                  style={{ width: "100%", minWidth: "150px" }}
+                                  style={{ width: "100%" }}
                                 />
                               </td>
-                              <td>
+                              <td style={{ width: "80px" }}>
                                 <Input
                                   type="text"
                                   placeholder="HH:MM"
@@ -584,15 +575,15 @@ const AuditAttendanceContainer = () => {
                                       }
                                     }
                                   }}
-                                  style={{ width: "100%", minWidth: "80px" }}
+                                  style={{ width: "100%" }}
                                 />
                               </td>
-                              <td>
+                              <td style={{ width: "70px" }}>
                                 <Input
                                   type="select"
                                   value={row.ampm}
                                   onChange={(e) => updateNewRow(rowIndex, 'ampm', e.target.value)}
-                                  style={{ width: "100%", minWidth: "70px" }}
+                                  style={{ width: "100%" }}
                                 >
                                   <option value="AM">AM</option>
                                   <option value="PM">PM</option>
