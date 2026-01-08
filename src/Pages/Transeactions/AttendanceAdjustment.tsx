@@ -404,6 +404,8 @@ const AttendanceAdjustmentContainer = () => {
     }
   };
 
+  
+
   const handleCancel = () => {
     setSelectedRows(new Set());
     setEditingRowIndex(null);
@@ -421,6 +423,7 @@ const AttendanceAdjustmentContainer = () => {
   const handleClose = () => {
     window.history.back();
   };
+  
 
   return (
     <div className="page-body" style={{ backgroundColor: "#e6f3ff" }}>
