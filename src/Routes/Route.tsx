@@ -30,6 +30,9 @@ import EmployeeReportDetail from "../Pages/Reports/EmployeeReport";
 import AttendanceImport from "../Pages/Transeactions/InportFromText";
 import AuditAttendance from "../Pages/Transeactions/AuditAttendance";
 import AttendanceAdjustment from "../Pages/Transeactions/AttendanceAdjustment";
+import EmployeeAttendanceSheet from "../Pages/Transeactions/EmployeeAttendaceSheet";
+import EmployeeWiseYearly from "../Pages/Transeactions/EmployeeWiseYearly";
+import EmployeeDayWiseReport from "../Pages/Transeactions/EmployeeDayWiseReport";
 
 // Helper function to normalize paths
 const normalizePath = (path: string): string => {
@@ -74,4 +77,7 @@ export const routes = [
   { path: normalizePath("/importFromText"), Component: <AttendanceImport /> },
   { path: normalizePath("/auditAttendance"), Component: <AuditAttendance /> },
   {path: normalizePath("/attendanceAdjustment"), Component: <AttendanceAdjustment /> },
+  {path: normalizePath("/employeeAttendanceSheet"), Component: <EmployeeAttendanceSheet /> },
+  {path: normalizePath("/employeeWiseYearly"), Component: <EmployeeWiseYearly /> },
+  {path: normalizePath("/employeeDayWiseReport"), Component: <EmployeeDayWiseReport /> },
 ];
