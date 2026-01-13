@@ -30,9 +30,11 @@ import EmployeeReportDetail from "../Pages/Reports/EmployeeReport";
 import AttendanceImport from "../Pages/Transeactions/InportFromText";
 import AuditAttendance from "../Pages/Transeactions/AuditAttendance";
 import AttendanceAdjustment from "../Pages/Transeactions/AttendanceAdjustment";
-import EmployeeAttendanceSheet from "../Pages/Transeactions/EmployeeAttendaceSheet";
-import EmployeeWiseYearly from "../Pages/Transeactions/EmployeeWiseYearly";
-import EmployeeDayWiseReport from "../Pages/Transeactions/EmployeeDayWiseReport";
+import EmployeeAttendanceSheet from "../Pages/Reports/EmployeeAttendaceSheet";
+import EmployeeWiseYearly from "../Pages/Reports/EmployeeWiseYearly";
+import EmployeeDayWiseReport from "../Pages/Reports/EmployeeDayWiseReport";
+import DepartmentAttendanceSummary from "../Pages/Reports/DepartmentAttendanceSummary";
+import MusterRollOTSummary from "../Pages/Reports/MusterRollOTSummary";
 
 // Helper function to normalize paths
 const normalizePath = (path: string): string => {
@@ -80,4 +82,6 @@ export const routes = [
   {path: normalizePath("/employeeAttendanceSheet"), Component: <EmployeeAttendanceSheet /> },
   {path: normalizePath("/employeeWiseYearly"), Component: <EmployeeWiseYearly /> },
   {path: normalizePath("/employeeDayWiseReport"), Component: <EmployeeDayWiseReport /> },
+  {path: normalizePath("/departmentAttendanceSummary"), Component: <DepartmentAttendanceSummary /> },
+  {path: normalizePath("/musterRollOTSummary"), Component: <MusterRollOTSummary /> },
 ];

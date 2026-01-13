@@ -56,11 +56,9 @@ const EmployeeWiseYearlyContainer = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // Load Employee data
     loadEmployeeData();
   }, []);
 
-  // Load data when filters change
   useEffect(() => {
     if (selectedYear) {
       fetchYearlyAttendanceData();
@@ -104,6 +102,8 @@ const EmployeeWiseYearlyContainer = () => {
         console.error("Error parsing authUser from localStorage:", err);
       }
 
+
+      
       let vformData = new FormData();
       vformData.append("Year", String(selectedYear));
       
@@ -124,6 +124,7 @@ const EmployeeWiseYearlyContainer = () => {
         { arguList: { id: 0, formData: vformData } },
         true
       );
+
 
       if (response && Array.isArray(response) && response.length > 0) {
         setGridData(response);

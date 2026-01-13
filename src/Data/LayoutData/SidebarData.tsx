@@ -31,7 +31,6 @@ export const getMenuList = (): MenuItem[] => {
         { id: 3, title: "Attendance Adjustment", path: `${process.env.PUBLIC_URL}/attendanceAdjustment`, icon: "Building", type: "link", bookmark: true },
         ],
       
-      
     },
     {
       title: "Reports",
@@ -40,10 +39,12 @@ export const getMenuList = (): MenuItem[] => {
         {id:2,title:"Employee Attendance Sheet",path:`${process.env.PUBLIC_URL}/employeeAttendanceSheet`,icon:"Building",type:"link",bookmark:true},
         {id:3,title:"Employee Wise Yearly",path:`${process.env.PUBLIC_URL}/employeeWiseYearly`,icon:"Building",type:"link",bookmark:true},
         {id:4,title:"Employee Day Wise Report",path:`${process.env.PUBLIC_URL}/employeeDayWiseReport`,icon:"Building",type:"link",bookmark:true},
+        {id:5,title:"Department Attendance Summary",path:`${process.env.PUBLIC_URL}/departmentAttendanceSummary`,icon:"Building",type:"link",bookmark:true},
+        {id:6,title:"Muster Roll OT Summary",path:`${process.env.PUBLIC_URL}/musterRollOTSummary`,icon:"Building",type:"link",bookmark:true},
       ]
     },
     {
-      title: "Tools",
+      title: "Tools", 
       Items: [
         {id:1,title:"Global Options",path:`${process.env.PUBLIC_URL}/globalOptions`,icon:"Building",type:"link",bookmark:true}
       ]
