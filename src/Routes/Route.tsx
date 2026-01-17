@@ -35,6 +35,7 @@ import EmployeeWiseYearly from "../Pages/Reports/EmployeeWiseYearly";
 import EmployeeDayWiseReport from "../Pages/Reports/EmployeeDayWiseReport";
 import DepartmentAttendanceSummary from "../Pages/Reports/DepartmentAttendanceSummary";
 import MusterRollOTSummary from "../Pages/Reports/MusterRollOTSummary";
+import LeaveAssign from "../Pages/Transeactions/LeaveAssign";
 
 // Helper function to normalize paths
 const normalizePath = (path: string): string => {
@@ -84,4 +85,5 @@ export const routes = [
   {path: normalizePath("/employeeDayWiseReport"), Component: <EmployeeDayWiseReport /> },
   {path: normalizePath("/departmentAttendanceSummary"), Component: <DepartmentAttendanceSummary /> },
   {path: normalizePath("/musterRollOTSummary"), Component: <MusterRollOTSummary /> },
+  {path: normalizePath("/leaveAssign"), Component: <LeaveAssign /> },
 ];

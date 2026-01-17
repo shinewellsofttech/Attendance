@@ -1,7 +1,7 @@
 export const API_WEB_URLS = {
 
-  // BASE: "https://apiattendancenew.shinewellsofttech.co.in/api/V1/",
-  BASE: "http://192.168.31.151:5000/api/V1/",
+  BASE: "https://apiattendancenew.shinewellsofttech.co.in/api/V1/",
+  // BASE: "http://192.168.31.151:5000/api/V1/",
   // BASE: "http://192.168.31.70:7037/api/V1/",
   BASE_CHAT: "https://apiDemotask.shinewellsofttech.co.in/",
 
