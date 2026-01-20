@@ -16,7 +16,8 @@ interface LeaveRecord {
   [key: string]: any; // For dynamic date columns
 }
 
-const LeaveAssignContainer = () => {
+
+  const LeaveAssignContainer = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<string>("");
   const [fromMonthYear, setFromMonthYear] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
@@ -96,7 +97,6 @@ const LeaveAssignContainer = () => {
       setTableData([]);
       return;
     }
-
     const staticData: LeaveRecord[] = [];
     
     // Get only the selected employee
@@ -266,10 +266,7 @@ const LeaveAssignContainer = () => {
                                 fontSize: "12px",
                               }}
                             >
-                              <div>{formatDateForTableHeader(date)}</div>
-                              <div style={{ fontSize: "10px", fontWeight: "normal" }}>
-                                {getDayName(date)}
-                              </div>
+                              {formatDateForTableHeader(date)}
                             </th>
                           ))}
                         </tr>

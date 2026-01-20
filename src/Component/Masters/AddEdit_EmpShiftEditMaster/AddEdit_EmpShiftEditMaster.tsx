@@ -8,10 +8,11 @@ import { Card, CardBody, CardFooter, Col, Container, FormGroup, Input, Label, Ro
 import { Btn } from "../../../AbstractElements";
 import Breadcrumbs from "../../../CommonElements/Breadcrumbs/Breadcrumbs";
 import CardHeaderCommon from "../../../CommonElements/CardHeaderCommon/CardHeaderCommon";
-import { Fn_FillListData, Fn_DisplayData, Fn_AddEditData } from "../../../store/Functions";
+import { Fn_FillListData, Fn_DisplayData, Fn_AddEditData, Fn_GetReport } from "../../../store/Functions";
 import { API_WEB_URLS } from "../../../constants/constAPI";
 
 interface EmployeeShiftRow {
+  F_DepartmentMaster: string;
   F_EmployeeMaster: string;
   F_ShiftMaster1: string;
   F_ShiftMaster2: string;
@@ -23,12 +24,14 @@ interface FormValues {
 
 const API_URL_SAVE = "EmpShiftEditMaster/0/token";
 const API_URL_EDIT = API_WEB_URLS.MASTER + "/0/token/EmpShiftEditMaster/Id";
+const API_URL_DEPARTMENT = API_WEB_URLS.MASTER + "/0/token/DepartmentMaster/Id/0";
 const API_URL_EMPLOYEE = API_WEB_URLS.MASTER + "/0/token/EmployeeMaster/Id/0";
 const API_URL_SHIFT = API_WEB_URLS.MASTER + "/0/token/ShiftMaster/Id/0";
 
 const AddEdit_EmpShiftEditMasterContainer = () => {
   const [state, setState] = useState({
     id: 0,
+    DepartmentArray: [] as any[],
     EmployeeArray: [] as any[],
     ShiftArray: [] as any[],
     formData: {} as any,
@@ -36,12 +39,16 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
     isProgress: true,
   });
 
+  // Store employees per row based on department selection
+  const [rowEmployees, setRowEmployees] = useState<{ [key: number]: any[] }>({});
+
   const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Load Employee and Shift data for dropdowns
+    // Load Department, Employee and Shift data for dropdowns
+    Fn_FillListData(dispatch, setState, "DepartmentArray", API_URL_DEPARTMENT);
     Fn_FillListData(dispatch, setState, "EmployeeArray", API_URL_EMPLOYEE);
     Fn_FillListData(dispatch, setState, "ShiftArray", API_URL_SHIFT);
 
@@ -56,10 +63,34 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
     }
   }, [dispatch, location.state, navigate]);
 
+  // Load employees for rows when formData is loaded (edit mode) or when initial values are set
+  useEffect(() => {
+    const loadEmployeesForRows = async () => {
+      if (state.formData?.Rows && Array.isArray(state.formData.Rows) && state.formData.Rows.length > 0) {
+        // Edit mode - load employees for existing rows
+        for (let index = 0; index < state.formData.Rows.length; index++) {
+          const row = state.formData.Rows[index];
+          if (row.F_DepartmentMaster) {
+            await loadEmployeesByDepartment(index, row.F_DepartmentMaster);
+          } else {
+            // Load all employees if no department selected
+            await loadEmployeesByDepartment(index, "");
+          }
+        }
+      } else {
+        // Add mode - load employees for the initial empty row
+        await loadEmployeesByDepartment(0, "");
+      }
+    };
+
+    loadEmployeesForRows();
+  }, [state.formData]);
+
   const validationSchema = Yup.object({
     Rows: Yup.array()
       .of(
         Yup.object({
+          F_DepartmentMaster: Yup.string().required("Department is required"),
           F_EmployeeMaster: Yup.string().required("Employee is required"),
           F_ShiftMaster1: Yup.string().required("Shift Master 1 is required"),
           F_ShiftMaster2: Yup.string().required("Shift Master 2 is required"),
@@ -84,6 +115,8 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
 
     // Loop through all rows and append data
     values.Rows.forEach((row, index) => {
+      // Send 0 if no department selected, otherwise send the department ID
+      vformData.append(`Rows[${index}].F_DepartmentMaster`, row.F_DepartmentMaster || "0");
       vformData.append(`Rows[${index}].F_EmployeeMaster`, row.F_EmployeeMaster || "");
       vformData.append(`Rows[${index}].F_ShiftMaster1`, row.F_ShiftMaster1 || "");
       vformData.append(`Rows[${index}].F_ShiftMaster2`, row.F_ShiftMaster2 || "");
@@ -107,14 +140,94 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
 
   const isEditMode = state.id > 0;
 
+  // Helper function to safely convert time to string
+  const formatTimeToString = (time: any): string => {
+    if (!time) return "";
+    // If it's already a string, return it
+    if (typeof time === "string") return time;
+    // If it's an object, try to extract time value
+    if (typeof time === "object") {
+      // Check for common time object properties
+      if (time.time) return String(time.time);
+      if (time.value) return String(time.value);
+      if (time.toString && typeof time.toString === "function") {
+        try {
+          return time.toString();
+        } catch (e) {
+          return "";
+        }
+      }
+      // If it's a duration object with hours/minutes, format it
+      if (time.hours !== undefined && time.minutes !== undefined) {
+        const hours = String(time.hours).padStart(2, "0");
+        const minutes = String(time.minutes).padStart(2, "0");
+        return `${hours}:${minutes}`;
+      }
+      return "";
+    }
+    // Fallback to String conversion
+    return String(time);
+  };
+
+  // Load employees based on department selection using GetList API
+  const loadEmployeesByDepartment = async (rowIndex: number, departmentId: string) => {
+    try {
+      let vformData = new FormData();
+      // If department is selected, send department ID, otherwise send 0
+      if (departmentId && departmentId !== "") {
+        vformData.append("F_Department", departmentId);
+      } else {
+        vformData.append("F_Department", "0");
+      }
+
+      // setState function for Fn_GetReport to update employees for this row
+      const setStateForReport = (data: any) => {
+        if (data && Array.isArray(data)) {
+          setRowEmployees((prev) => ({
+            ...prev,
+            [rowIndex]: data,
+          }));
+        } else {
+          setRowEmployees((prev) => ({
+            ...prev,
+            [rowIndex]: [],
+          }));
+        }
+      };
+
+      // Call Fn_GetReport to get employees filtered by department
+      await Fn_GetReport(
+        dispatch,
+        setStateForReport,
+        "EmployeeArray",
+        "EmployeeMaster/0/token",
+        { arguList: { formData: vformData } },
+        true
+      );
+    } catch (error) {
+      console.error("Error loading employees by department:", error);
+      setRowEmployees((prev) => ({
+        ...prev,
+        [rowIndex]: [],
+      }));
+    }
+  };
+
+  // Get filtered employees for a specific row
+  const getFilteredEmployees = (rowIndex: number) => {
+    return rowEmployees[rowIndex] || [];
+  };
+
   const initialValues: FormValues = {
     Rows: state.formData?.Rows && Array.isArray(state.formData.Rows) && state.formData.Rows.length > 0
       ? state.formData.Rows.map((row: any) => ({
+          F_DepartmentMaster: row.F_DepartmentMaster || "",
           F_EmployeeMaster: row.F_EmployeeMaster || "",
           F_ShiftMaster1: row.F_ShiftMaster1 || "",
           F_ShiftMaster2: row.F_ShiftMaster2 || "",
         }))
       : [{
+          F_DepartmentMaster: "",
           F_EmployeeMaster: "",
           F_ShiftMaster1: "",
           F_ShiftMaster2: "",
@@ -176,6 +289,44 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
                         <Col xs="12">
                           {values.Rows.map((row, rowIndex) => (
                             <div key={rowIndex} className="emp-shift-row">
+                              {/* Department Field */}
+                              <div style={{ minWidth: "200px", flex: "1 1 auto" }}>
+                                <FormGroup>
+                                  <Label>
+                                    Department <span className="text-danger">*</span>
+                                  </Label>
+                                  <Input
+                                    type="select"
+                                    value={row.F_DepartmentMaster}
+                                    onChange={async (e) => {
+                                      const newRows = [...values.Rows];
+                                      newRows[rowIndex].F_DepartmentMaster = e.target.value;
+                                      // Reset employee when department changes
+                                      newRows[rowIndex].F_EmployeeMaster = "";
+                                      setFieldValue("Rows", newRows);
+                                      
+                                      // Load employees based on selected department
+                                      await loadEmployeesByDepartment(rowIndex, e.target.value);
+                                    }}
+                                    onBlur={handleBlur}
+                                    className="btn-square"
+                                    invalid={touched.Rows && errors.Rows && Array.isArray(errors.Rows) && errors.Rows[rowIndex] && !!(errors.Rows[rowIndex] as any)?.F_DepartmentMaster}
+                                  >
+                                    <option value="">Select Department</option>
+                                    {state.DepartmentArray.map((item: any) => (
+                                      <option key={item.Id} value={item.Id}>
+                                        {item.Name || `Department ${item.Id}`}
+                                      </option>
+                                    ))}
+                                  </Input>
+                                  {touched.Rows && errors.Rows && Array.isArray(errors.Rows) && errors.Rows[rowIndex] && (errors.Rows[rowIndex] as any)?.F_DepartmentMaster && (
+                                    <div className="text-danger small">
+                                      {(errors.Rows[rowIndex] as any).F_DepartmentMaster}
+                                    </div>
+                                  )}
+                                </FormGroup>
+                              </div>
+
                               {/* Employee Field */}
                               <div style={{ minWidth: "200px", flex: "1 1 auto" }}>
                               <FormGroup>
@@ -193,9 +344,10 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
                                   onBlur={handleBlur}
                                   className="btn-square"
                                     invalid={touched.Rows && errors.Rows && Array.isArray(errors.Rows) && errors.Rows[rowIndex] && !!(errors.Rows[rowIndex] as any)?.F_EmployeeMaster}
+                                    disabled={!row.F_DepartmentMaster}
                                 >
                                     <option value="">Select Employee</option>
-                                  {state.EmployeeArray.map((item: any) => (
+                                  {getFilteredEmployees(rowIndex).map((item: any) => (
                                     <option key={item.Id} value={item.Id}>
                                       {item.Name || item.MachineEnrollmentNo || `Employee ${item.Id}`}
                                     </option>
@@ -230,7 +382,7 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
                                     <option value="">Select Shift</option>
                                     {state.ShiftArray.map((item: any) => (
                                       <option key={item.Id} value={item.Id}>
-                                        {item.Name} ({item.InTime || ""} - {item.OutTime || ""})
+                                        {item.Name} ({formatTimeToString(item.InTime)} - {formatTimeToString(item.OutTime)})
                                       </option>
                                     ))}
                                   </Input>
@@ -263,7 +415,7 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
                                     <option value="">Select Shift</option>
                                     {state.ShiftArray.map((item: any) => (
                                       <option key={item.Id} value={item.Id}>
-                                        {item.Name} ({item.InTime || ""} - {item.OutTime || ""})
+                                        {item.Name} ({formatTimeToString(item.InTime)} - {formatTimeToString(item.OutTime)})
                                       </option>
                                     ))}
                                   </Input>
@@ -282,13 +434,17 @@ const AddEdit_EmpShiftEditMasterContainer = () => {
                                 color="success"
                                 size="sm"
                                 type="button"
-                                onClick={() => {
+                                onClick={async () => {
                                       const newRows = [...values.Rows, {
+                                        F_DepartmentMaster: "",
                                         F_EmployeeMaster: "",
                                         F_ShiftMaster1: "",
                                         F_ShiftMaster2: "",
                                       }];
                                       setFieldValue("Rows", newRows);
+                                      // Load employees for new row with department 0 (all employees)
+                                      const newRowIndex = newRows.length - 1;
+                                      await loadEmployeesByDepartment(newRowIndex, "");
                                 }}
                                     style={{ minWidth: "40px", height: "40px" }}
                                     title="Add Row"
