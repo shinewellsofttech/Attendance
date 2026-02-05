@@ -10,7 +10,7 @@ import EmployeeReport from "../Pages/Dashboard/EmployeeReport";
 import AddEdit_EmployeeMaster from "../Pages/Masters/AddEdit_EmployeeMaster";
 import PageList_EmployeeMaster from "../Pages/Masters/PageList_EmployeeMaster";
 import AddEdit_EmpShiftEditMaster from "../Pages/Masters/AddEdit_EmpShiftEditMaster";
-import PageList_EmpShiftEditMaster from "../Pages/Masters/PageList_EmpShiftEditMaster";
+import ShiftAssign from "../Pages/Transeactions/ShiftAssign";
 import AddEdit_MachineTypeMaster from "../Pages/Masters/AddEdit_MachineTypeMaster";
 import PageList_MachineTypeMaster from "../Pages/Masters/PageList_MachineTypeMaster";
 import AddEdit_StateMaster from "../Pages/Masters/AddEdit_StateMaster";
@@ -60,7 +60,7 @@ export const routes = [
   { path: normalizePath("/addEdit_EmployeeMaster"), Component: <AdminRoute><AddEdit_EmployeeMaster /></AdminRoute> },
   { path: normalizePath("/employeeMaster"), Component: <AdminRoute><PageList_EmployeeMaster /></AdminRoute> },
   { path: normalizePath("/addEdit_EmpShiftEditMaster"), Component: <AdminRoute><AddEdit_EmpShiftEditMaster /></AdminRoute> },
-  { path: normalizePath("/employeeShiftEditMaster"), Component: <AdminRoute><PageList_EmpShiftEditMaster /></AdminRoute> },
+  { path: normalizePath("/shiftAssign"), Component: <AdminRoute><ShiftAssign /></AdminRoute> },
   { path: normalizePath("/addEdit_MachineTypeMaster"), Component: <AdminRoute><AddEdit_MachineTypeMaster /></AdminRoute> },
   { path: normalizePath("/machineTypeMaster"), Component: <AdminRoute><PageList_MachineTypeMaster /></AdminRoute> },
   { path: normalizePath("/addEdit_StateMaster"), Component: <AdminRoute><AddEdit_StateMaster /></AdminRoute> },

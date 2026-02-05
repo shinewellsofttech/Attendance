@@ -1,9 +1,9 @@
-import AddEdit_EmpShiftEditMasterContainer from "../../Component/Masters/AddEdit_EmpShiftEditMaster/AddEdit_EmpShiftEditMaster";
+import ShiftAssignContainer from "../Transeactions/ShiftAssign";
 
 const AddEdit_EmpShiftEditMaster = () => {
   return (
     <div className="page-body">
-      <AddEdit_EmpShiftEditMasterContainer />
+      <ShiftAssignContainer />
     </div>
   );
 };

@@ -14,7 +14,7 @@ export const getMenuList = (): MenuItem[] => {
         { id: 2, title: "Shift Master", path: `${process.env.PUBLIC_URL}/shiftMaster`, icon: "Building", type: "link", bookmark: true },
         { id: 3, title: "Holiday Master", path: `${process.env.PUBLIC_URL}/holidayMaster`, icon: "Building", type: "link", bookmark: true },      
         { id: 4, title: "Employee Master ", path: `${process.env.PUBLIC_URL}/employeeMaster`, icon: "Building", type: "link", bookmark: true },
-        { id: 5, title: "Employee Shift Edit Master", path: `${process.env.PUBLIC_URL}/employeeShiftEditMaster`, icon: "Building", type: "link", bookmark: true },
+        // { id: 5, title: "Employee Shift Edit Master", path: `${process.env.PUBLIC_URL}/employeeShiftEditMaster`, icon: "Building", type: "link", bookmark: true },
         {id:6,title:"Machine Type Master",path:`${process.env.PUBLIC_URL}/machineTypeMaster`,icon:"Building",type:"link",bookmark:true},
         {id:7, title:"Machine Master",path:`${process.env.PUBLIC_URL}/machineMaster`,icon:"Building",type:"link",bookmark:true},
         {id:8,title:"State Master",path:`${process.env.PUBLIC_URL}/stateMaster`,icon:"Building",type:"link",bookmark:true},
@@ -30,6 +30,8 @@ export const getMenuList = (): MenuItem[] => {
         { id: 2, title: "Audit Attendance", path: `${process.env.PUBLIC_URL}/auditAttendance`, icon: "Building", type: "link", bookmark: true },
         { id: 3, title: "Attendance Adjustment", path: `${process.env.PUBLIC_URL}/attendanceAdjustment`, icon: "Building", type: "link", bookmark: true },
         { id: 4, title: "Leave Assign", path: `${process.env.PUBLIC_URL}/leaveAssign`, icon: "Building", type: "link", bookmark: true },
+        { id: 5, title: "Shift Assign", path: `${process.env.PUBLIC_URL}/shiftAssign`, icon: "Building", type: "link", bookmark: true },
+        
         ],
       
     },
