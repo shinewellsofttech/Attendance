@@ -110,24 +110,14 @@ const GlobalOptionsContainer = () => {
     // Use promise to get data directly
     Fn_FillListData(dispatch, setState, "GlobalOptionsArray", API_URL_GLOBAL_OPTIONS)
       .then((dataList: any) => {
-        console.log("📥 [GlobalOptions] Data received from API:", dataList);
         if (dataList && Array.isArray(dataList) && dataList.length > 0) {
           const formData = dataList[0];
-          console.log("✅ [GlobalOptions] Extracted formData:", formData);
-          console.log("✅ [GlobalOptions] HolidayDay:", formData.HolidayDay, "Type:", typeof formData.HolidayDay);
-          console.log("✅ [GlobalOptions] F_ShiftMaster:", formData.F_ShiftMaster, "Type:", typeof formData.F_ShiftMaster);
-          console.log("✅ [GlobalOptions] MinWorkingHoursFullDay:", formData.MinWorkingHoursFullDay);
-          console.log("✅ [GlobalOptions] IsRailwayTime:", formData.IsRailwayTime);
-          console.log("✅ [GlobalOptions] F_MachineType:", formData.F_MachineType);
-          console.log("✅ [GlobalOptions] F_MachineId:", formData.F_MachineId);
-          
           setState((prevState: any) => ({
             ...prevState,
             formData: formData,
             isProgress: false,
           }));
         } else {
-          console.warn("⚠️ [GlobalOptions] dataList is empty or not an array");
           setState((prevState: any) => ({
             ...prevState,
             isProgress: false,
@@ -135,22 +125,13 @@ const GlobalOptionsContainer = () => {
         }
       })
       .catch((error: any) => {
-        console.error("❌ [GlobalOptions] Error loading GlobalOptions:", error);
+        console.error("Error loading GlobalOptions:", error);
         setState((prevState: any) => ({
           ...prevState,
           isProgress: false,
         }));
       });
   }, [dispatch, navigate]);
-
-  // Debug: Log formData changes
-  useEffect(() => {
-    if (state.formData && Object.keys(state.formData).length > 0) {
-      console.log("🔄 [GlobalOptions] formData updated in state:", state.formData);
-      console.log("🔄 [GlobalOptions] HolidayDay value:", state.formData.HolidayDay);
-      console.log("🔄 [GlobalOptions] F_ShiftMaster value:", state.formData.F_ShiftMaster);
-    }
-  }, [state.formData]);
 
   // Auto-focus on first field when form is ready
   useEffect(() => {
@@ -241,9 +222,6 @@ const GlobalOptionsContainer = () => {
   };
 
 
-  // Debug: Log initial values calculation
-  console.log("📋 [GlobalOptions] Calculating initialValues from formData:", state.formData);
-  
   const initialValues: FormValues = {
     // HolidayDay can be string or number, convert to string for select
     HolidayDay: state.formData?.HolidayDay 
@@ -293,8 +271,6 @@ const GlobalOptionsContainer = () => {
     IPAddress: state.formData?.IPAddress || "",
     PortNo: state.formData?.PortNo || "",
   };
-
-  console.log("📋 [GlobalOptions] Calculated initialValues:", initialValues);
 
   return (
     <>
