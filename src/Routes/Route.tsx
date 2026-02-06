@@ -36,7 +36,8 @@ import EmployeeDayWiseReport from "../Pages/Reports/EmployeeDayWiseReport";
 import DepartmentAttendanceSummary from "../Pages/Reports/DepartmentAttendanceSummary";
 import MusterRollOTSummary from "../Pages/Reports/MusterRollOTSummary";
 import LeaveAssign from "../Pages/Transeactions/LeaveAssign";
-
+import AddEdit_LeaveTypeMaster from "../Pages/Masters/AddEdit_LeaveTypeMaster";
+import PageList_LeaveTypeMaster from "../Pages/Masters/PageList_LeaveTypeMaster";
 // Helper function to normalize paths
 const normalizePath = (path: string): string => {
   const basePath = process.env.PUBLIC_URL || "";
@@ -69,6 +70,8 @@ export const routes = [
   { path: normalizePath("/cityMaster"), Component: <AdminRoute><PageList_CityMaster /></AdminRoute> },
   { path: normalizePath("/addEdit_MachineMaster"), Component: <AdminRoute><AddEdit_MachineMaster /></AdminRoute> },
   { path: normalizePath("/machineMaster"), Component: <AdminRoute><PageList_MachineMaster /></AdminRoute> },
+  {path: normalizePath("/addEdit_LeaveTypeMaster"), Component: <AdminRoute><AddEdit_LeaveTypeMaster /></AdminRoute> },
+  {path: normalizePath("/leaveTypeMaster"), Component: <AdminRoute><PageList_LeaveTypeMaster /></AdminRoute> },
   { path: normalizePath("/globalOptions"), Component: <AdminRoute><GlobalOptions /></AdminRoute> },
   { path: normalizePath("/taskManagement"), Component: <TaskManagement /> },
   { path: normalizePath("/addEdit_DepartmentMaster"), Component: <AdminRoute><AddEdit_DepartmentMaster /></AdminRoute> },

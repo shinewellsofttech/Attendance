@@ -21,6 +21,7 @@ export const getMenuList = (): MenuItem[] => {
         {id:9,title:"City Master",path:`${process.env.PUBLIC_URL}/cityMaster`,icon:"Building",type:"link",bookmark:true},
         {id:10,title:"Department Master",path:`${process.env.PUBLIC_URL}/departmentMaster`,icon:"Building",type:"link",bookmark:true},
         {id:11,title:"Designation Master",path:`${process.env.PUBLIC_URL}/designationMaster`,icon:"Building",type:"link",bookmark:true},
+        {id:12,title:"Leave Type Master",path:`${process.env.PUBLIC_URL}/leaveTypeMaster`,icon:"Building",type:"link",bookmark:true},
       ],
     },
     {
